@@ -65,7 +65,7 @@ A Domain Pack may add:
 
 A Domain Pack must **not** redefine the core priority model, finding verification bar, report schema, or First-Principles method. Core contracts win on conflict. When packs overlap, combine the domain facts and deduplicate the final finding by root cause; do not emit duplicate findings merely because two packs surfaced the same issue.
 
-Read `domains/_CONTRACT.md` for the pack format. Record loaded packs and versions in Audit Metadata.
+`domains/_CONTRACT.md` defines the authoring contract for creating/validating packs. **Do not load it during ordinary audits** unless pack structure itself is under review; load only the applicable `DOMAIN.md` files. Record loaded packs and versions in Audit Metadata.
 
 ## First-Principles boundary
 
