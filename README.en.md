@@ -168,14 +168,14 @@ full-spectrum-review/
 │   └── example-finding.md          # full worked finding
 └── domains/
     ├── _CONTRACT.md                # Domain Pack authoring contract (not loaded during audits)
-    └── trading/DOMAIN.md           # trading pack v2
+    └── trading/DOMAIN.md           # trading pack v3
 ```
 
 `SKILL.md` stays lean and details load on demand, so a fixed giant prompt never crowds out the audited code's context.
 
 ## Versioning and packs
 
-[`VERSION`](VERSION) is the single source of the current Core version (pre-1.0 SemVer; policy at the top of [CHANGELOG](CHANGELOG.md)). Domain Packs version independently — Core `0.7.0` can ship alongside Trading Pack `v2`, and an audit report records both.
+[`VERSION`](VERSION) is the single source of the current Core version (pre-1.0 SemVer; policy at the top of [CHANGELOG](CHANGELOG.md)). Domain Packs version independently — Core `0.7.0` can ship alongside Trading Pack `v3`, and an audit report records both.
 
 ## References
 

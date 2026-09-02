@@ -1,6 +1,6 @@
 ---
 domain: trading
-version: 2
+version: 3
 applies-when:
   - system consumes market data or generates trading signals
   - system submits, manages, cancels, reconciles, or accounts for orders and positions
@@ -16,6 +16,8 @@ Use this pack for exchange/broker trading systems, including systematic/quant tr
 
 This pack supplies **trading-specific facts and scenarios**. Generic retry, concurrency, evidence, priority, First-Principles, and reporting rules remain owned by core.
 
+Version 3 incorporates invariants and scenarios generalized from production incident postmortems of live trading systems (silent data-chain freezes, protection churn loops, rollback incidents, cross-endpoint misreads). The statements below are the generalized domain truth; no specific deployment is referenced.
+
 ## Domain Glossary
 
 Keep these concepts distinct when they exist in the target:
@@ -23,12 +25,16 @@ Keep these concepts distinct when they exist in the target:
 - **Market event / candle** — observed market data, with event/exchange time and local receive/decision time.
 - **Signal** — strategy conclusion; not an order or position.
 - **Intent** — desired trading action after strategy/risk/business decisions.
+- **Business obligation** — the economic result the system owes (reduce a fixed fraction, preserve a runner, maintain full stop coverage); it is discharged by facts, not by placing any single order.
+- **Mechanism** — the disposable means used to discharge an obligation (maker, market compensation, bridge stop, retry); replacing a mechanism must not create a second obligation.
 - **Order request** — outbound request submitted to an exchange/broker.
 - **Acknowledgement / exchange order** — external system accepted/identified an order; not necessarily filled.
 - **Execution / fill** — actual quantity traded.
 - **Trade/accounting event** — economic consequence derived from fills/fees/funding/etc.
 - **Position** — current exposure after executions/reconciliation.
 - **Protection order** — stop/take-profit/risk order whose existence/state may differ from the main position.
+- **Canonical proof** — the durable, restart-surviving record that a specific obligation was discharged by specific exchange facts; distinct from exchange coverage itself.
+- **Runner** — an economic identity (origin cycle + entry basis + preserved quantity + exit policy), not "a small residual position".
 - **Account state** — balance, margin, leverage, mode, and other account-level facts that constrain positions/orders.
 
 Do not collapse signal → request → acknowledgement → fill → position into one status chain unless the external/business semantics genuinely make them identical.
@@ -48,6 +54,17 @@ Adapt these to the target's actual venue/strategy, but challenge violations expl
 - One real position/account action must not have conflicting active automation/operator owners.
 - Balance/equity/PnL changes must be attributable to executions, fees, funding, transfers, adjustments, or other explicit economic events.
 - Required protection is not considered present merely because local state says it was requested.
+- Exit facts and entry candidates are independent intents: a pending/unconfirmed entry must never suppress an already-satisfied exit; a reverse executes as close → confirmed flat → open, aborting the new leg if the close fails.
+- No anonymous irreversible action: every system-initiated order/flatten carries a durable, cycle-bound identity minted before POST — otherwise fills cannot be attributed and obligations cannot be closed.
+- Every computable exit obligation has a durable intent/order before its trigger can be crossed; absence of intent at a crossed target is itself a defect, not a market event.
+- Missing canonical proof is not missing exchange protection: it must not automatically trigger a second emergency order. Verify actual venue coverage across all system stops before replacing.
+- "Risk handled" is not "trade succeeded": outcome models distinguish confirmed-executed / aborted-flat / deferred-protected / failed-unknown.
+- Protection maintenance and reduce-only exits keep running in degraded and partial-fault states; entry capability is what the fault gates. Model restricted states as per-action capability sets, not one mode-equality gate.
+- A signal consumed without execution is a visible, repairable lifecycle event — replay/state must not advance past an entry that never executed.
+- Every reconcile blocker has an owner-mediated clear path once fresh matching facts arrive; irremovable blockers manufacture churn loops.
+- Rollback restores prior local state only when venue-side facts (position, protection, fills) are provably in the same generation; any venue-side progress forbids older-state restore.
+- An absent recovery plan or unknown ownership means observe-only: never interpret the absence as "expected zero protection" and cancel real venue stops.
+- Threshold-crossing states (protection upgrades, milestones) must be reconstructable from position-period history, not only from live observation — a missed live window must not lose the fact forever.
 
 ## External Semantics
 
@@ -66,7 +83,13 @@ Verify as applicable:
 - account/server timestamp windows or signing-time requirements;
 - rate-limit weights/order limits, throttling responses, and temporary bans;
 - symbol status, maintenance windows, delisting/expiry/contract lifecycle;
-- fee, funding, rebate, settlement, and account-balance semantics.
+- fee, funding, rebate, settlement, and account-balance semantics;
+- the **enforcement boundary** of rate limits and bans (e.g., egress IP) versus the system's instance/container boundary — processes sharing an egress boundary must share one backoff state and request budget, and a rate-limit warning is a stop signal: continuing converts it into an escalating ban;
+- exclusivity constraints on same-direction close-position orders: replacement needs deterministic bridge-cancel-place sequencing and must tolerate the transient old+new overlap window with same-operation resume;
+- representation semantics on read-back: an omitted field may be normalized to a default, `quantity=0` may mean full coverage, and a 200-level envelope may still carry a business failure code;
+- economic values reported by different endpoints (order avgPrice vs position entryPrice) must be precision-normalized before comparison — exact float equality across endpoints reclassifies your own position as external drift;
+- the signature input must be byte-identical to the transmitted body: one serialization feeds both signing and dispatch, boolean/number formatting included;
+- every venue rejection is logged with the authoritative error code and response body — transport status alone is unattributable.
 
 A local abstraction must not claim guarantees stronger than the governing venue contract.
 
@@ -80,7 +103,10 @@ Check realistic paths such as:
 - exchange time vs local receive time drift;
 - restart/backfill around a decision boundary;
 - backtest data exposes information that live code would not yet know;
-- strategy acts twice on the same logical close/event.
+- strategy acts twice on the same logical close/event;
+- a completion event fires but the data read for the decision does not yet contain the declared fact — defensive trimming that silently demotes the decision to older data is a systematic one-period lag, not safety;
+- an in-flight newer fetch reports lag: it must neither invalidate still-fresh processed generations nor consume signals without execution — freshness is owned by the last successfully processed generation;
+- signal/decision price domain and fill/exit price domain are the same instrument: structural price levels computed on one symbol must never gate or trigger exits on another.
 
 For closed-bar strategies, explicitly verify how "closed" is established and how late corrections are handled.
 
@@ -98,7 +124,10 @@ Exercise as applicable:
 - reconnect with missed execution events;
 - crash before/after local persistence at acknowledgement/fill boundaries;
 - stale local order state after restart;
-- reconciliation discovers an external order/position absent locally.
+- reconciliation discovers an external order/position absent locally;
+- a failed order attempt persists a failure/backoff record that gates re-evaluation — absence of an open order alone is never a re-place trigger, and all venue egress funnels through the single client owning the limit/backoff contract;
+- every position-conditional order re-confirms the venue position at submit time: if the position is gone, clear local state and abort;
+- a fast market gaps through a fixed target: verify the obligation already had a durable intent, and that an already-crossed exit abandons maker preference for deterministic reduce-only execution.
 
 Core rule instantiated here: **unknown external side effect requires reconciliation before an unsafe retry**.
 
@@ -114,9 +143,15 @@ Check:
 - one-way vs hedge/dual-side modes where applicable;
 - reversal/flip behavior and close-vs-open semantics;
 - restart while a protection order is missing/unknown;
-- reconciliation that finds external exposure with no valid internal owner.
+- reconciliation that finds external exposure with no valid internal owner;
+- restart/reconnect transient windows are first-class scenarios (lock contention, replay, dual projections) — verify the recovery window, not only steady state;
+- startup reads the canonical projection before any external/manual classification: a stale legacy projection plus a canonical cycle must not reclassify the system's own position as external;
+- a single unbound fill blocks only its own binding — raw fill ingest and notification for subsequent fills continue;
+- a protection/emergency incident persists a durable latch that survives restart and blocks new entries until explicitly reopened with fresh evidence;
+- healthy and repair paths return the same proof contract: an ok-only snapshot must not be able to downgrade a previously verified state;
+- migration/release windows model the real venue events that occur during them — a pre-window snapshot is not terminal truth, and configuration changes apply to future cycles while active cycles keep their frozen contract.
 
-Fail closed when the supported real-money workflow cannot establish safe ownership/exposure/protection state.
+Fail closed when the supported real-money workflow cannot establish safe ownership/exposure/protection state — but scope the closure to the unknown fact, not to the whole system: local uncertainty must not starve unrelated facts, fills, or authorized reduce-only risk reduction.
 
 ## Exchange Mechanics
 
@@ -162,7 +197,10 @@ Compare semantics, not merely code reuse:
 - order-type/trigger semantics;
 - cancellation/replacement behavior;
 - position/margin constraints;
-- restart/reconciliation and missing-data behavior.
+- restart/reconciliation and missing-data behavior;
+- unknown config/enum values fail closed in **every** engine — silent fall-through to a default branch in one engine is a parity bug;
+- internally expanded representations (step counts, indices, expansion counters) are never used directly as semantic labels in gating, display, or exports;
+- adjudicating historical live results requires a time-segmented replay of then-effective config/release/state — a current-parameter rerun of history answers "what would today's strategy have done", not "why did live behave that way"; reports carry their provenance mode.
 
 A backtest can be internally correct yet business-invalid if it assumes information or executions unavailable live.
 
@@ -176,7 +214,8 @@ Check:
 - duplicate/missing fill accounting;
 - rounding/precision effects;
 - transfers/adjustments if account equity is reconciled;
-- consistency between execution history, position, balance, and reported PnL.
+- consistency between execution history, position, balance, and reported PnL;
+- residual computations use the intent-frozen quantity as their base, not a snapshot already advanced by the same action.
 
 Do not infer economic truth solely from requested order quantity.
 
@@ -186,11 +225,39 @@ For stops, take-profit, liquidation protection, exposure limits, kill switches, 
 
 Scenario sweep should include protection placement failure, unknown result, partial position change, cancel/replace race, restart/outage, and operator takeover.
 
+Additionally:
+
+- a newly placed stop/exit never evaluates against the current bar's pre-establishment extremes — aggregate OHLC carries no intra-bar ordering, and same-bar activation is a real-loss failure mode;
+- emergency protection installation first proves insufficient fresh coverage across **all** system stops (not only its own client-order namespace);
+- protection validation checks trigger/anchor semantics, not only quantity coverage — an earlier-triggered or over-covering stop is a semantic failure, not a pass;
+- an authorized reduce-only de-risk path cannot be blocked by pending strategy obligations or readiness gates: safety gates must distinguish "forbidden to add risk" from "forbidden to reduce risk".
+
+## Notification & Alerting Semantics
+
+Trading systems fail through their observability as much as their order paths:
+
+- notification/alert classification derives from persisted machine codes that survive system boundaries; downstream components never parse display text, subjects, or instance prefixes for semantics;
+- incident identity is a stable typed root plus dimensions — no display strings, batch counts, or time buckets; recovery fires only when all contributing producers recover;
+- alert intents are durably persisted before remote availability; a delivery failure never blocks trading, and provider `sent` is never reported or relied on as inbox delivery;
+- priority capacity is reserved at the point of irreversible consumption: routine notification volume must not exhaust the budget critical trade alerts need;
+- automated action notifications carry their rule source, so strategy actions are not mistaken for manual instructions;
+- "process healthy" verdicts derive from the trading chain's most recent progress evidence (last processed fact), not from out-of-band component liveness — a healthcheck that never touches the decision chain can stay green while the chain is dead.
+
 ## Severity Context
 
 Trading systems may move real money, so ordinary software defects can have asymmetric impact. Raise severity only when the mechanism actually reaches money/exposure/protection/ownership risk; do not label every trading bug P1/P0 merely because money exists somewhere in the system.
 
 Uncertain real-money order/position/protection state on a reachable production path is generally more serious than the same state ambiguity in a read-only analytics component.
+
+When reading evidence and writing findings, keep these paired claims distinct — each pair has been conflated in a real incident:
+
+- protected ≠ healthy; risk-handled ≠ trade-succeeded; proof-missing ≠ protection-missing;
+- quantity reduced ≠ obligation discharged; runner shrunk ≠ runner restored;
+- tighter stop ≠ compliant stop (trigger semantics, not only coverage);
+- verified in-process ≠ verified durable across restart;
+- notification sent ≠ delivered; access=full ≠ able to open (effective capability is the intersection of persisted access, runtime health, and writer liveness);
+- incident discovered-at ≠ started-at;
+- unquantified financial impact stays unknown — never conclude "no loss" from a single fill.
 
 ## Out of Scope / Core Boundary
 
@@ -200,6 +267,7 @@ This pack does not redefine:
 - core finding priority/confidence/status;
 - general security hardening;
 - generic performance optimization;
-- report structure or evidence bar.
+- report structure or evidence bar;
+- incident-remediation process discipline (stop rules, attempt budgets, release governance) — real failure sources, but process rules rather than domain truth.
 
 It supplies trading instances of those concerns. If the target also has substantial distributed-systems, accounting, security, database, or AI-agent behavior and matching packs are available, load them alongside this pack rather than expanding trading into a catch-all.

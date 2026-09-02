@@ -165,14 +165,14 @@ full-spectrum-review/
 │   └── example-finding.md          # 完整 finding 范例
 └── domains/
     ├── _CONTRACT.md                # Domain Pack 编写契约（审计时不加载）
-    └── trading/DOMAIN.md           # 交易领域包 v2
+    └── trading/DOMAIN.md           # 交易领域包 v3
 ```
 
 `SKILL.md` 保持精简，细节按需加载，避免固定巨型 Prompt 挤占被审代码的上下文。
 
 ## 版本与领域包
 
-[`VERSION`](VERSION) 唯一确定当前 Core 版本（pre-1.0 SemVer，政策见 [CHANGELOG](CHANGELOG.md) 开头）。Domain Pack 独立版本化——Core 可以是 `0.7.0`，同时 Trading Pack 是 `v2`，审计报告会同时记录二者。
+[`VERSION`](VERSION) 唯一确定当前 Core 版本（pre-1.0 SemVer，政策见 [CHANGELOG](CHANGELOG.md) 开头）。Domain Pack 独立版本化——Core 可以是 `0.7.0`，同时 Trading Pack 是 `v3`，审计报告会同时记录二者。
 
 ## 参考标准
 

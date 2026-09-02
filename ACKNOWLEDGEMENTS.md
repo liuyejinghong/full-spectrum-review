@@ -10,5 +10,6 @@ Useful public references and inspirations include:
 - Sentry public security-review skill patterns
 - Public domain-driven-design review skills
 - Public production-readiness and architecture-review skills
+- Production incident postmortems from private live trading deployments (anonymized), which informed trading pack v3's incident-derived invariants and scenarios
 
 No upstream skill is vendored or required at runtime. This repository is intended to remain model-neutral and usable by any Agent Skills-compatible client.

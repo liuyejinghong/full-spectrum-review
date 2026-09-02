@@ -8,6 +8,25 @@ Domain Pack 独立版本化；例如 Trading Pack 的版本记录在 `domains/tr
 
 > 说明：下面的早期版本根据仓库实际演进整理。当前仓库尚不要求每个版本都必须已有 Git tag 或 GitHub Release；后续正式发布时可以让 tag/release 与 `VERSION` 对齐。
 
+## [trading-pack v3] - 2026-09-02
+
+Domain Pack 独立版本化，本条目不影响 Core `0.7.0`。
+
+### Added
+
+- **源自真实生产事故复盘的领域条款**（30 篇实盘事故复盘 + 跨事故系统性审查的泛化蒸馏，不引用任何具体部署）：
+  - Glossary 新增四个概念：Business obligation / Mechanism / Canonical proof / Runner（经济身份非小残仓）；
+  - Domain Invariants 新增 11 条：退出/入场意图独立、禁止匿名不可逆动作（POST 前 mint cycle-bound identity）、可计算义务在触发前必有 durable intent、proof 缺失≠保护缺失、"风险已处置"≠"交易成功"（typed 结果）、degraded 态保护与 reduce-only 必须继续（按动作能力集建模）、信号被消费未执行必须可见可修、blocker 必须有清除路径、rollback 的 generation 安全、空恢复计划≠期望零保护、阈值穿越状态可从历史重建；
+  - External Semantics 新增：限频执行边界（出口 IP）与实例边界错位、429 是升级封禁前的停止信号、closePosition 同向唯一性与 bridge-cancel-place、读回表示语义（quantity=0=全仓/省略字段归一/200 信封带失败码）、跨 endpoint 价格比较须精度归一、签名字节=发送字节、拒绝必须记录 venue 响应体；
+  - Scenario Sweep 扩充：同 K 激活屏障（聚合 OHLC 无 bar 内顺序）、完成事件与数据可见性竞态、新鲜度归 last-processed generation、跨标的价基、失败下单须持久退避记录、提交时点重证仓位、重启瞬态窗口、canonical 先于外部分类、单 fill 不阻塞后续 ingest、事故闩锁跨重启、健康/修复路径同一 proof 合同、迁移窗口内真实 venue 事件；
+  - 新增 **Notification & Alerting Semantics** 一节：机器码语义跨边界保留、稳定 typed 事故身份、durable intent 先于远端可用、优先级容量保留、进程健康≠业务链路活性；
+  - Severity Context 新增"成对概念区分"清单（protected≠healthy、risk-handled≠succeeded、sent≠delivered、access=full≠能开仓、未核算损益保持 unknown 等十余对）；
+  - Backtest parity 新增：历史复盘须分段回放当时生效配置并标注 provenance mode、未知枚举值在每个引擎 fail-closed、内部表示不得当语义标签。
+
+### Changed
+
+- Out of Scope 显式排除事故修复流程纪律（停止规则/attempt 预算/发版治理）——真实事故源，但属流程规则非领域真相。
+
 ## [0.7.0] - 2026-09-02
 
 ### Changed
