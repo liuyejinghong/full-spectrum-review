@@ -1,111 +1,175 @@
 # Finding Verification Protocol
 
-Use this protocol after candidate generation and before publishing findings.
+This file is the **authoritative owner** of finding verification, types, priority, confidence, status, and canonical finding schema. Other files may reference these rules but should not redefine them.
 
-The goal is high recall during exploration and high precision in durable review output.
+Explore with high recall; publish with high precision.
 
-## Verification questions
+## Verification bar
 
-Every candidate finding must answer all of the following:
+Every publishable finding must establish the following as applicable.
 
-### Trigger
+### Trigger / workload
 
-What real input, state, workload, failure, execution ordering, maintenance action, recovery scenario, or supported evolution exposes the problem or cost?
+What real input, state, workload, failure, ordering, maintenance action, recovery scenario, or supported evolution exposes the problem or cost?
 
-For First-Principles / Accidental-Complexity findings, the trigger does not need to be an already-reproduced runtime bug. It may be the current maintenance/state-space/recovery burden itself, but the reviewer must identify a concrete mechanism and cost rather than a subjective preference.
+Structural complexity does not need an already-reproduced runtime bug, but its current state-space, maintenance, recovery, or operational burden must be concrete rather than aesthetic.
 
 ### Mechanism
 
-Why does the implementation produce the incorrect, unsafe, wasteful, or overly complex behavior?
-
-For accidental complexity, explain which current layers do not carry independent requirements and why the same required behavior can be achieved by a materially simpler sufficient mechanism.
+Why does the implementation or design produce the incorrect, unsafe, costly, or unnecessarily complex result?
 
 ### Impact
 
-What concrete consequence follows?
+What concrete consequence follows? Valid impact includes correctness/business failure and also demonstrated state-space growth, synchronization/recovery burden, resource cost, operational complexity, test-matrix expansion, or elevated change risk.
 
-Valid impact includes correctness or safety failure, but can also include measurable or structurally demonstrated state-space growth, synchronization burden, additional recovery paths, operational complexity, resource cost, test-matrix expansion, or elevated maintenance/change risk.
+### Reachability / incidence
 
-### Reachability
-
-Can the supported product or operating environment actually reach the scenario or incur the stated cost?
-
-Reachable edge cases count. Merely constructible theoretical states do not.
-
-For structural complexity findings, the current code path and maintenance/recovery burden are already reachable if they are part of supported production behavior; do not invent hypothetical future scale or consumers to justify the finding.
+Can the supported product/environment reach the scenario or incur the stated cost? Reachable edge cases count; merely constructible theoretical states do not.
 
 ### Scope
 
-Why is the issue relevant to the reviewed target?
+Why is the issue relevant to the audited target?
 
-For a PR/commit, acceptable scope relationships include:
-
-- introduced by the change;
-- exposed by a newly reachable path;
-- relied upon by the change;
-- required to be updated because a contract changed.
-
-For repository-wide audits, high-value existing architectural or complexity problems are in scope when they materially affect current supported behavior, operations, or maintainability.
+For PR/commit audits, valid relationships include introduced, exposed, relied upon, or required to change because a contract moved. For repository-wide audits, material current architectural/operational/maintenance problems are in scope even if old.
 
 ### Evidence
 
-Point to concrete code, diff, tests, documentation, external contract, architecture/state mapping, benchmark, or measured behavior.
+Point to concrete code, diff, tests, documentation, external contract, history, architecture/state mapping, profile, benchmark, or measured behavior.
 
-For an accidental-complexity finding, evidence must support both sides of the comparison:
+If the bar cannot be met, record an observation, Open Question, or evidence gap instead of a finding.
 
-1. the actual responsibilities/constraints that must be preserved; and
-2. the extra current layers claimed to be unnecessary or consolidatable.
+## Disconfirmation for Accidental Complexity
 
-If these cannot be answered, downgrade the candidate to an observation or discard it.
+Before publishing an `Accidental Complexity` finding, actively investigate why the challenged layer exists.
+
+The finding must include:
+
+```text
+Why this layer exists / Disconfirmation attempt
+- Evidence investigated: history / tests / ADRs / callers / operators / external constraints / other available sources
+- Evidence found: current requirement that justifies the layer, or evidence that no current independent requirement was found
+```
+
+The reviewer does **not** need every evidence source and must not fabricate unavailable history. The requirement is a meaningful attempt to find contrary evidence.
+
+No disconfirmation attempt → no Accidental Complexity finding. Keep it as an observation/hypothesis until investigated.
 
 ## Root-cause deduplication
 
-Group symptoms that share one root cause into one finding. Do not inflate counts by reporting every manifestation separately.
+Group symptoms that share one root cause. Do not inflate counts by reporting each downstream guard, retry, cache, or cleanup path independently when one ownership/state error explains them.
 
-Conversely, do not merge unrelated root causes just because they occur in the same file.
+Do not merge unrelated root causes just because they occur in the same file.
 
-If one incorrect ownership or state model created several guards, retries, caches, and cleanup paths, prefer one root-cause finding that explains which downstream layers become unnecessary after the root correction.
+When an upstream correction makes another finding unnecessary, preserve both stable IDs if both were previously published and mark the downstream one `SUPERSEDED` with `Superseded-by: <ID>`.
 
-## Severity
+## Finding types
 
-Use severity to communicate impact, not reviewer confidence or whether a bug has already been observed.
+Use one primary type:
 
-- **P0 Critical** — catastrophic loss/corruption, systemic compromise, or unrecoverable production state.
-- **P1 High** — realistic major correctness, money/state, recovery, security, performance, or production risk; may include accidental complexity that materially obscures ownership/safety on a core path.
-- **P2 Medium** — real defect/regression, meaningful requirement violation, or material accidental complexity that significantly increases state/failure/operational/maintenance cost.
-- **P3 Low** — non-blocking but concrete maintainability, robustness, efficiency, operability, or bounded simplification issue.
+- `Defect` — implementation/behavior is wrong;
+- `Business` — business/domain semantics are wrong or incomplete;
+- `Reliability` — failure/recovery/concurrency/state behavior is unsafe;
+- `Accidental Complexity` — required behavior is correct or potentially correct but implemented with materially unjustified responsibility/state/mechanism;
+- `Performance` — real workload/resource inefficiency with meaningful impact;
+- `Maintainability` — concrete structure makes supported change materially more error-prone or expensive;
+- `Security` — real trust-boundary/privilege defect;
+- `Test Gap` — important behavior is materially unproven and current tests create insufficient confidence.
 
-Do not manufacture P3 findings to make a review look busy, and do not inflate aesthetic cleanup into P1/P2.
+Use area/domain tags for secondary dimensions instead of inventing extra primary types.
 
-## Finding format
+## Priority model
+
+Priority communicates **impact**, not reviewer confidence.
+
+- **P0 — Critical:** catastrophic loss/corruption, systemic compromise, or unrecoverable production state.
+- **P1 — High:** realistic major correctness, business, money/state, recovery, security, performance, or production risk. Accidental complexity may reach P1 only when it materially obscures ownership/safety on a core path or makes safe operation/change genuinely hazardous.
+- **P2 — Medium:** real defect/regression, meaningful requirement violation, material accidental complexity, or significant stability/efficiency/maintenance weakness with moderate impact.
+- **P3 — Low:** concrete non-blocking improvement with limited impact.
+
+Do not manufacture P3 findings to make a review look busy. Do not inflate aesthetic cleanup into P1/P2.
+
+## Confidence model
+
+Confidence communicates how strongly the available evidence supports the mechanism/conclusion:
+
+- **High:** mechanism and relevant evidence are directly established; important contrary explanations were checked where applicable.
+- **Medium:** mechanism is well supported but one material fact remains inferred/unverified.
+- **Low:** useful lead with material uncertainty. Prefer an observation/Open Question over a durable finding unless the uncertainty itself is decision-relevant.
+
+Severity and confidence must remain independent.
+
+## Finding status
+
+Stable findings use one of:
+
+- `OPEN` — current and unresolved;
+- `FIXED` — verified corrected in a later revision;
+- `ACCEPTED` — consciously accepted/not planned to change, with rationale;
+- `SUPERSEDED` — replaced by another root-cause finding/design decision;
+- `REOPENED` — previously fixed/accepted but evidence shows the problem is current again.
+
+Do not delete old IDs from the audit ledger merely because their status changed.
+
+## Stable identity
+
+Finding IDs are repository-level identities, not report-local ordinal numbers.
+
+- Reuse an existing ID for the same root cause across re-reviews.
+- Never renumber a finding because its priority or sort order changed.
+- Never reuse a retired ID for a different issue.
+- For a repository without an existing audit ledger, allocate new IDs monotonically (`FSR-001`, `FSR-002`, ...). Subsequent audits continue from the highest assigned ID.
+
+The report sorts by priority independently of ID.
+
+## Canonical schema
+
+Required structured header:
 
 ```text
-[P?] Short imperative title
-path/to/file:line
-
-Problem / Opportunity
-What is wrong or unnecessarily complex.
-
-Trigger / Workload
-The real scenario or supported burden that exposes it.
-
-Mechanism
-Why the implementation behaves this way.
-
-Impact
-The concrete consequence.
-
-Evidence
-Code/test/contract/architecture evidence.
-
-Minimal fix / simplification direction
-The smallest reasonable correction direction, not a full implementation.
-
-Regression test / measurement / invariant proof
-What should prove the fix or simplification safe.
+ID: FSR-###
+Priority: P0 | P1 | P2 | P3
+Confidence: High | Medium | Low
+Status: OPEN | FIXED | ACCEPTED | SUPERSEDED | REOPENED
+Type: ...
+Area: ...
+Evidence: path:line / test / contract / history / measurement
 ```
 
-For First-Principles / Accidental-Complexity findings, also establish:
+Conditional header fields only when meaningful:
+
+```text
+Blocking: yes | no
+Depends-on: FSR-...
+Superseded-by: FSR-...
+Domain-Pack: <name@version>
+```
+
+Do not fill optional fields with repetitive `none` values.
+
+### P0 / P1 body
+
+Use the full shape:
+
+```text
+Problem / Opportunity
+Trigger / Workload
+Mechanism
+Impact
+Recommended direction
+Verification
+```
+
+### P2 body
+
+Keep the same evidence discipline but combine sections when clarity improves. Usually 3–5 short paragraphs/blocks are enough.
+
+### P3 body
+
+Keep it compact: concrete problem/cost, evidence, and recommended direction/verification. Do not give a P3 the same prose weight as a P0.
+
+### Additional Accidental Complexity proof
+
+For this type, also establish:
 
 ```text
 Required outcome
@@ -113,34 +177,44 @@ Irreducible constraints / invariants
 Minimum sufficient mechanism
 Current mechanism
 Accidental complexity delta
-Responsibility transfer
-Behavior-preservation plan
+Why this layer exists / Disconfirmation attempt
+Responsibility transfer / behavior-preservation plan
 ```
 
-Do not publish "this feels over-engineered" without that proof.
+These may be compact for P2/P3 but cannot be omitted when they are needed to prove the claim.
 
-## Confidence discipline
+## Maintainability bar
 
-Do not use vague language such as "might be problematic" as a substitute for mechanism.
+Do not publish "hard to maintain" as a finding.
 
-When evidence is incomplete, explicitly say what is known and what remains unproven. Use `INSUFFICIENT_EVIDENCE` when a terminal verdict cannot responsibly be made.
+Show a concrete maintenance mechanism, such as a supported change that must be duplicated across several owners/mappings, a contract whose change requires non-local synchronized edits, or a structure that predictably creates inconsistent variants. State the likely change/error cost and evidence.
+
+## Test Gap bar
+
+Do not publish "needs more tests" as a finding.
+
+Identify:
+
+1. the important behavior/invariant that is materially unproven;
+2. the consequence if it is wrong;
+3. why existing tests do not establish the behavior or create false confidence;
+4. the smallest test/scenario/evidence that would close the gap.
+
+Use the report's general Evidence/Verification Gaps section for uncertainties that cannot be responsibly assigned a finding priority.
 
 ## Tests and measurements
 
-Passing tests support a conclusion but do not prove correctness, business validity, or architectural necessity. Failed tests are evidence only after confirming the failure is relevant.
+Passing tests are evidence, not proof. Failed tests are evidence only after confirming relevance.
 
-For performance findings, prefer an asymptotic argument, profile, benchmark, resource-growth observation, or a clearly repeated expensive operation. Do not fabricate benchmark numbers.
+For performance findings, prefer an asymptotic argument tied to real size, profile/trace, benchmark, measured growth, or clearly repeated expensive work. Never fabricate benchmark numbers.
 
-For simplification findings, prefer a responsibility/invariant proof over line-count claims.
+For simplification findings, prefer responsibility/invariant proof over line-count claims.
 
-## Repository persistence
+## Repository writes vs review-platform writes
 
-When the user explicitly authorizes repository writes:
+These are separate capabilities:
 
-- put line-local findings in inline review comments when an accurate diff position is available;
-- put cross-file/system findings in the review body or canonical report;
-- bind the review to the exact commit when the platform supports it;
-- recheck PR head immediately before submitting a terminal verdict;
-- if head drifted, do not apply the old verdict to the new head.
+- **Repository write access** may be used only for audit artifacts when authorized by the user and the read-only audit discipline in `SKILL.md`.
+- **Review-platform API access** (for example PR inline comments/reviews) is optional and separate. Use it only when available and authorized; otherwise place the evidence in the canonical report.
 
-Keep the chat summary shorter than the durable review.
+A durable report must not depend on GitHub/GitLab review API availability.
