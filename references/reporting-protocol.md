@@ -1,12 +1,12 @@
 # Audit Reporting Protocol
 
-A full-spectrum audit ends in one coherent, persistent audit artifact. Chat summaries and inline review comments are secondary surfaces.
+A full-spectrum audit ends in one coherent, persistent audit artifact. Chat summaries, worker packets, and inline review comments are secondary surfaces.
 
-This file owns report structure, coverage accounting, audit-ledger lifecycle, re-review behavior, and persistence. Finding priority/type/confidence/status/schema are owned by `finding-protocol.md`.
+This file owns report structure, coverage accounting, audit-ledger lifecycle, re-review behavior, and persistence. Finding priority/type/confidence/status/schema are owned by `finding-protocol.md`. Audit-unit decomposition and worker behavior are owned by `orchestration-protocol.md`.
 
 ## Core rule
 
-Sort active findings by **priority, then root-cause importance**, not file order, lens, discovery sequence, or ID.
+Sort active findings by **priority, then root-cause importance**, not file order, lens, discovery sequence, worker, or ID.
 
 The report must make a crucial distinction visible:
 
@@ -22,7 +22,8 @@ Carry forward:
 - unresolved/root-cause relationships;
 - prior Keep-As-Is decisions;
 - Open Questions that remain unresolved;
-- the last reviewed revision and relevant evidence limitations.
+- the last reviewed revision and relevant evidence limitations;
+- prior Skill/Domain Pack versions when useful to explain changed conclusions.
 
 Do not silently assign new IDs to old root causes.
 
@@ -58,12 +59,15 @@ Use plain equivalents if the target repository prefers different terminology, bu
 
 A full audit means all materially relevant areas are represented in the ledger. It does not require identical depth everywhere.
 
+When orchestration uses multiple Audit Units, the Lead may add an `Audit Unit / Reviewer` column if it materially improves traceability. Do not expose vendor-specific worker IDs unless useful to the maintainer.
+
 ## Proportional reporting
 
 The canonical artifact scales with the target.
 
 - A narrow PR may use a compact report with a short Coverage Ledger and concise P2/P3 findings.
 - A repository-wide audit may require extensive architecture/business evidence and a broader ledger.
+- A parallel/distributed audit still produces one report; worker packets are evidence inputs, not separate final reports.
 
 Do not drop evidence discipline because the report is short, and do not force a 30-line PR into a multi-thousand-word template when concise evidence is sufficient.
 
@@ -76,7 +80,9 @@ Do not drop evidence discipline because the report is short, and do not force a 
 - Repository / target
 - Reviewed revision / base / head
 - Audit date
-- Skill version/revision if known
+- Core Skill version from `VERSION` when available
+- Core Skill revision when available
+- Execution mode: single-unit / sequential-units / parallel-units
 - Loaded Domain Packs + versions
 - Prior audit/index consulted
 - Important evidence limitations
@@ -114,11 +120,46 @@ Do not drop evidence discipline because the report is short, and do not force a 
 
 ## Appendix
 - Commands/tests/benchmarks/contracts/history inspected when useful
+- Optional orchestration summary for multi-unit audits
 ```
 
 Skip empty detailed priority sections if doing so improves signal, but the Priority Overview or Executive Summary must make zero counts clear.
 
 Use the canonical finding schema and prose depth rules from `finding-protocol.md` instead of redefining another schema here.
+
+## Skill / Domain Pack version traceability
+
+A persisted report should record the Core Skill version from `VERSION` when that file is available in the installed Skill. If the harness exposes the Skill repository revision, record it as well.
+
+This allows a re-review to distinguish:
+
+```text
+same target changed
+vs
+same target + audit protocol changed
+```
+
+Record each loaded Domain Pack's own version from its `DOMAIN.md` metadata. Domain Pack versions are independent from the Core Skill version.
+
+Do not load `CHANGELOG.md` during ordinary audits merely to produce metadata. The current version is sufficient; consult changelog/history only when comparing audit-protocol behavior across versions.
+
+## Orchestration traceability
+
+For audits that used multiple logical Audit Units, record enough to understand coverage without dumping internal worker transcripts.
+
+A compact appendix can state:
+
+```markdown
+### Audit Units
+- Execution / order lifecycle — deep — COMPLETE
+- Position / reconciliation — deep — COMPLETE
+- Architecture / ownership cross-cut — deep — COMPLETE
+- Web UI — sampled — PARTIAL
+```
+
+Do not persist raw worker scratch or concatenate Reviewer Packets into the report unless their contents are independently useful evidence.
+
+The Lead remains accountable for the final report regardless of whether units ran in parallel or sequentially.
 
 ## Recommended Execution Order
 
@@ -173,6 +214,8 @@ A new audit should classify prior findings before inventing replacements:
 
 A finding's priority may change without changing its ID.
 
+When a previous finding changes because the Skill or Domain Pack protocol changed rather than the target changed, say so explicitly where material.
+
 ## Positive Findings / Keep As-Is persistence
 
 Include only important choices supported by evidence, such as authoritative-state boundaries, invariants, or recovery semantics that later agents should not casually "simplify."
@@ -201,9 +244,10 @@ When repository writes are available and the user authorized audit persistence:
 2. otherwise use `docs/reviews/` plus `docs/reviews/INDEX.md`;
 3. write only audit artifacts — never implementation changes under audit authorization;
 4. include exact reviewed revision(s);
-5. do not overwrite a report for a different revision;
-6. update the index after the report is finalized;
-7. keep platform inline comments concise and secondary to the canonical report.
+5. include Core Skill and loaded Domain Pack versions when available;
+6. do not overwrite a report for a different revision;
+7. update the index after the report is finalized;
+8. keep platform inline comments concise and secondary to the canonical report.
 
 Default report filenames:
 
@@ -218,11 +262,13 @@ If writes are unavailable, return the complete report and the index delta the ma
 
 Before declaring the audit complete, verify facts rather than self-certifying a checklist:
 
-- the Coverage Ledger represents every materially relevant planned area;
+- the Coverage Ledger represents every materially relevant planned area/Audit Unit;
 - `PARTIAL`, `NOT_COVERED`, and `INSUFFICIENT_EVIDENCE` are explicit rather than hidden behind "no finding";
 - applicable Domain Packs and versions are recorded;
+- Core Skill version/revision is recorded when available;
 - prior stable IDs/statuses were reconciled on re-review;
-- findings passed `finding-protocol.md` and were root-cause deduplicated;
+- material cross-unit contradictions are resolved or explicitly left as insufficient evidence;
+- findings passed `finding-protocol.md` and were root-cause deduplicated centrally;
 - Recommended Execution Order reflects dependencies;
 - unresolved business intent is in Open Questions;
 - the report and index are persisted or returned as complete reusable artifacts.
