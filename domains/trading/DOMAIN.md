@@ -16,7 +16,7 @@ Use this pack for exchange/broker trading systems, including systematic/quant tr
 
 This pack supplies **trading-specific facts and scenarios**. Generic retry, concurrency, evidence, priority, First-Principles, and reporting rules remain owned by core.
 
-Version 3 incorporates invariants and scenarios generalized from production incident postmortems of live trading systems (silent data-chain freezes, protection churn loops, rollback incidents, cross-endpoint misreads). The statements below are the generalized domain truth; no specific deployment is referenced.
+This pack is distilled review experience — production incident postmortems of live trading systems (silent data-chain freezes, protection churn loops, rollback incidents, cross-endpoint misreads), venue contracts, and production practice — generalized without referencing any deployment. It is high-value experience to check, **not universal law**: every statement is a verify/challenge question that has been true often enough, and cost enough, to be worth asking on every audit. A target may have a legitimate, evidenced reason to differ — when it does, record the reasoning instead of forcing compliance. Statements conditioned on features the target does not have (runners, tiered exits, release machinery, a notification pipeline) simply do not apply. Where this pack conflicts with the actual venue contract or the target's evidenced business requirements, those win and the conflict is recorded. Most statements assume a system that holds positions over time, manages protection orders, restarts, and reconciles against a venue.
 
 ## Domain Glossary
 
@@ -55,14 +55,14 @@ Adapt these to the target's actual venue/strategy, but challenge violations expl
 - Balance/equity/PnL changes must be attributable to executions, fees, funding, transfers, adjustments, or other explicit economic events.
 - Required protection is not considered present merely because local state says it was requested.
 - Exit facts and entry candidates are independent intents: a pending/unconfirmed entry must never suppress an already-satisfied exit; a reverse executes as close → confirmed flat → open, aborting the new leg if the close fails.
-- No anonymous irreversible action: every system-initiated order/flatten carries a durable, cycle-bound identity minted before POST — otherwise fills cannot be attributed and obligations cannot be closed.
+- No anonymous irreversible action: every system-initiated order/flatten carries a durable identity tying it to the position/trade it serves, minted before POST — otherwise fills cannot be attributed to the intent that caused them and obligations cannot be closed.
 - Every computable exit obligation has a durable intent/order before its trigger can be crossed; absence of intent at a crossed target is itself a defect, not a market event.
 - Missing canonical proof is not missing exchange protection: it must not automatically trigger a second emergency order. Verify actual venue coverage across all system stops before replacing.
 - "Risk handled" is not "trade succeeded": outcome models distinguish confirmed-executed / aborted-flat / deferred-protected / failed-unknown.
 - Protection maintenance and reduce-only exits keep running in degraded and partial-fault states; entry capability is what the fault gates. Model restricted states as per-action capability sets, not one mode-equality gate.
 - A signal consumed without execution is a visible, repairable lifecycle event — replay/state must not advance past an entry that never executed.
 - Every reconcile blocker has an owner-mediated clear path once fresh matching facts arrive; irremovable blockers manufacture churn loops.
-- Rollback restores prior local state only when venue-side facts (position, protection, fills) are provably in the same generation; any venue-side progress forbids older-state restore.
+- Restoring an older local snapshot is valid only while the venue-side world (position, protection, fills) provably still matches it; any exchange-side progress since the snapshot forbids blind restore — reconcile forward against current venue truth instead.
 - An absent recovery plan or unknown ownership means observe-only: never interpret the absence as "expected zero protection" and cancel real venue stops.
 - Threshold-crossing states (protection upgrades, milestones) must be reconstructable from position-period history, not only from live observation — a missed live window must not lose the fact forever.
 
@@ -105,7 +105,7 @@ Check realistic paths such as:
 - backtest data exposes information that live code would not yet know;
 - strategy acts twice on the same logical close/event;
 - a completion event fires but the data read for the decision does not yet contain the declared fact — defensive trimming that silently demotes the decision to older data is a systematic one-period lag, not safety;
-- an in-flight newer fetch reports lag: it must neither invalidate still-fresh processed generations nor consume signals without execution — freshness is owned by the last successfully processed generation;
+- an in-flight newer fetch reports lag: it must neither invalidate still-fresh processed data nor consume signals without execution — freshness is judged by what was last successfully processed, not by what was last fetched;
 - signal/decision price domain and fill/exit price domain are the same instrument: structural price levels computed on one symbol must never gate or trigger exits on another.
 
 For closed-bar strategies, explicitly verify how "closed" is established and how late corrections are handled.
@@ -145,7 +145,7 @@ Check:
 - restart while a protection order is missing/unknown;
 - reconciliation that finds external exposure with no valid internal owner;
 - restart/reconnect transient windows are first-class scenarios (lock contention, replay, dual projections) — verify the recovery window, not only steady state;
-- startup reads the canonical projection before any external/manual classification: a stale legacy projection plus a canonical cycle must not reclassify the system's own position as external;
+- startup classifies positions from the authoritative current state, not from a stale secondary view — a legacy or cached projection must not reclassify the system's own position as external;
 - a single unbound fill blocks only its own binding — raw fill ingest and notification for subsequent fills continue;
 - a protection/emergency incident persists a durable latch that survives restart and blocks new entries until explicitly reopened with fresh evidence;
 - healthy and repair paths return the same proof contract: an ok-only snapshot must not be able to downgrade a previously verified state;
@@ -234,14 +234,14 @@ Additionally:
 
 ## Notification & Alerting Semantics
 
-Trading systems fail through their observability as much as their order paths:
+Trading systems fail through their observability as much as their order paths — a mislabeled stop or a swallowed fill alert is a risk-decision failure, not a cosmetic one:
 
-- notification/alert classification derives from persisted machine codes that survive system boundaries; downstream components never parse display text, subjects, or instance prefixes for semantics;
-- incident identity is a stable typed root plus dimensions — no display strings, batch counts, or time buckets; recovery fires only when all contributing producers recover;
-- alert intents are durably persisted before remote availability; a delivery failure never blocks trading, and provider `sent` is never reported or relied on as inbox delivery;
-- priority capacity is reserved at the point of irreversible consumption: routine notification volume must not exhaust the budget critical trade alerts need;
-- automated action notifications carry their rule source, so strategy actions are not mistaken for manual instructions;
-- "process healthy" verdicts derive from the trading chain's most recent progress evidence (last processed fact), not from out-of-band component liveness — a healthcheck that never touches the decision chain can stay green while the chain is dead.
+- classification derives from persisted machine codes that survive system boundaries; downstream components never parse display text or subjects for semantics — a breakeven stop rendered as a "hard stop" (or the reverse) misprices incident severity during live trading;
+- incident identity is a stable typed root plus dimensions — no display strings, batch counts, or time buckets; recovery fires only when all contributing producers recover, so a repeated protection failure is not silently resolved by one component's cooldown;
+- alert intents are durably persisted before remote availability; a delivery failure never blocks trading, and provider `sent` is never reported or relied on as inbox delivery — a provider outage must not permanently swallow a terminal fill or protection notification;
+- priority capacity is reserved at the point of irreversible consumption: routine notification volume (periodic reports, debug mail) must not exhaust the budget that terminal trade and protection alerts need during an incident;
+- automated action notifications carry their rule source, so during operator takeover a strategy auto-action is not mistaken for a manual instruction;
+- "process healthy" verdicts derive from the trading chain's most recent progress evidence (last processed fact), not from out-of-band component liveness — a healthcheck that never touches the decision chain can stay green for hours while positions sit unmanaged.
 
 ## Severity Context
 

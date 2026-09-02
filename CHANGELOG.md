@@ -27,6 +27,12 @@ Domain Pack 独立版本化，本条目不影响 Core `0.7.0`。
 
 - Out of Scope 显式排除事故修复流程纪律（停止规则/attempt 预算/发版治理）——真实事故源，但属流程规则非领域真相。
 
+### Revised（同日修订，仍为 v3）
+
+- 新增包级**"经验非定律"声明**：pack 内容是蒸馏自真实系统的审查经验（高基率 verify/challenge 问题），不是金科玉律——目标有证据的理由可以不同（记录理由而非强制合规），venue 实际契约与业务证据永远优先于 pack 假设，目标没有的特性条款自动不适用。同一原则写入 `domains/_CONTRACT.md`，由所有 pack 继承。
+- 去源系统口音：匿名动作条款 "cycle-bound identity" → "绑定所服务仓位/交易的持久身份"；rollback 条款从 "generation" 改为朴素表述（venue 侧世界已前进则禁止盲恢复、只能前向对账）；新鲜度条款去掉 "processed generation" 术语；启动分类条款去掉 "canonical projection" 术语。
+- Notification & Alerting 每条补交易后果锚点：误标止损在实盘中误导风险决策与事故分级、provider 故障不得永久吞掉终态成交通知、事故中例行通知不得挤占关键交易告警预算、接管期间自动动作不得被误读为人工指令、健康检查不触决策链时仓位可数小时无人管理。
+
 ## [0.7.0] - 2026-09-02
 
 ### Changed

@@ -118,6 +118,7 @@ Do not modify `SKILL.md` merely to register a newly added pack.
 ## Conflicts and overlap
 
 - Core contracts always win over pack instructions.
+- A pack states distilled domain experience, **not universal law**: its statements are high-base-rate verify/challenge questions. Where the target has an evidenced reason to differ, the reasoning is recorded instead of forced compliance; actual external/venue contracts and evidenced business requirements always win over pack assumptions.
 - A pack cannot lower the core evidence/finding bar or redefine priority/report schema.
 - If two packs surface the same root cause, merge the domain evidence and publish one finding.
 - If pack-specific domain facts genuinely conflict and cannot be resolved from authoritative evidence, expose the conflict as an Open Question/evidence limitation rather than silently selecting one.
