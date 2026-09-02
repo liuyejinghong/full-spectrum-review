@@ -79,6 +79,10 @@ After or alongside subsystem review, create cross-cutting units only where they 
 
 These units should inspect cross-boundary contracts rather than duplicate every subsystem review.
 
+### Exclusive territory
+
+Assign every planned module/file area to exactly one unit. A unit tracing behavior across its boundary may read shared code, but only the owning unit audits it; the visitor records a cross-boundary concern in its packet instead of re-reviewing. Territory assignment prevents two units from silently re-reading and re-auditing the same files — a decomposition failure that otherwise surfaces only after the context has already been spent.
+
 ## Lead / Coordinator responsibilities
 
 The Lead owns the audit as a whole. It must:
@@ -100,7 +104,11 @@ The Lead does **not** need to retain every source file in active context. It mus
 
 ## Shared Audit Brief
 
-Before independent worker passes, provide a compact shared factual brief. Keep it materially smaller than the repository and avoid preloading tentative findings.
+Before independent worker passes, provide a compact shared factual brief.
+
+The brief is the one artifact multiplied by every worker, so keep it small by selection, never by truncation. Every line must pass an admission test: **would this fact change what a worker inspects, or how it interprets what it sees?** Repository lore, background narrative, and anything discoverable inside one unit's own scope do not belong. A fact that changes worker behavior is never cut for length.
+
+Avoid preloading tentative findings.
 
 Recommended contents:
 
@@ -176,6 +184,8 @@ Evidence gaps
 
 Packets should reference concrete source locations, contracts, tests, commands, or other evidence so the Lead can verify without rereading the worker's entire local context.
 
+Content selection, not length caps. A packet carries **every** candidate the unit found, each written to the level the Lead needs to verify it — mechanism, evidence references, why it matters. Never truncate candidate evidence to save space: whatever the packet omits is lost with the worker's context. What a packet excludes is narrative — process recounting, and pre-digested source the Lead can re-open at the cited locations. The Lead verifies by re-opening source at those locations; the packet's job is to make that verification cheap, not to carry the repository to the Lead.
+
 ## Candidate-only authority
 
 A worker/subagent produces **candidate findings**, not canonical findings.
@@ -225,6 +235,8 @@ The Lead compares packets and creates targeted follow-up units for:
 
 Follow-up units should be narrow and evidence-driven rather than rerunning the entire audit.
 
+A follow-up unit must name the **live question** it will settle: an uncertainty that is still open after Phase 1 and that no existing packet answers. "Re-confirming" a fact Phase 1 already established is not a unit — re-verification without a live uncertainty displaces the audit it serves.
+
 ### Phase 3 — Canonical synthesis
 
 Lead:
@@ -236,6 +248,8 @@ Lead:
 - assigns final priority/confidence/blocking where applicable;
 - updates Coverage Ledger truthfully;
 - produces one canonical report.
+
+Verification depth follows impact, and the evidence bar is redistributed, never lowered: every publishable candidate must still satisfy `finding-protocol.md`. The Lead re-opens source directly for P0/P1 candidates and for any candidate whose evidence is contested or load-bearing across units, and resolves lighter candidates through their cited references and cross-unit consistency. Never drop a candidate to save verification effort — if its evidence cannot support publication, record an observation or evidence gap instead. Re-reading a unit's entire scope to confirm its packet defeats the decomposition; accepting packets without reopening any evidence is a rubber stamp.
 
 ## Exact-revision consistency
 
@@ -278,16 +292,16 @@ When isolated workers are unavailable, the Lead executes the same Audit Units on
 After each unit:
 
 1. produce the same Reviewer Packet;
-2. retain the compact packet and shared brief;
+2. write the packet to a durable session-scratch location outside the audited repository, and keep the Shared Audit Brief equally recoverable — the packet on disk, not memory, is what survives context compaction;
 3. allow local implementation detail to leave active context when no longer needed;
 4. proceed to the next unit;
-5. perform the same Phase 2 verification and Phase 3 synthesis.
+5. perform the same Phase 2 verification and Phase 3 synthesis, reloading packets from disk.
 
 Sequential fallback is not a lower-standard audit. It is the same logical protocol with less execution concurrency.
 
 ## Avoid orchestration overhead
 
-Do not create more Audit Units than the target justifies.
+Do not create more Audit Units than the target justifies. Cost scales with the number of workers; information does not. Unit count follows the architecture, not a target: start from the subsystem/flow boundaries that genuinely see different things, merge units whose scopes would overlap, and split only when one unit is too large for a single reliable pass.
 
 Bad decomposition indicators:
 

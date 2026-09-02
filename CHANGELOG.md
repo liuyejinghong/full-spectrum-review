@@ -8,6 +8,28 @@ Domain Pack 独立版本化；例如 Trading Pack 的版本记录在 `domains/tr
 
 > 说明：下面的早期版本根据仓库实际演进整理。当前仓库尚不要求每个版本都必须已有 Git tag 或 GitHub Release；后续正式发布时可以让 tag/release 与 `VERSION` 对齐。
 
+## [0.4.0] - 2026-09-02
+
+### Added
+
+- `references/orchestration-protocol.md` 新增上下文节省纪律（全部通过方法/结构控制重复阅读，不设字数预算，不因长度截断信息）：
+  - Shared Audit Brief 逐行准入测试（能否改变某 worker 的检查范围或解读方式），以筛选控制体积而非截断；
+  - 单元独占文件管辖（exclusive territory）：每个模块只归一个单元审，跨边界只读记 concern，防止隐性重读；
+  - Reviewer Packet 内容选择：候选证据完整保留（packet 漏掉的候选随 worker 上下文消失），排除的只有过程叙事与源码预消化，不设长度上限；
+  - Lead 按影响分配核验深度：P0/P1 与跨单元争议候选直接重开源码核验，轻量候选经引用与一致性核验——力度重新分配但不降低 evidence bar，不因省力丢弃候选；
+  - Phase 2 跟进单元必须先说出要解决的"活性问题"（仍未解决且现有 packet 未回答）；
+  - 串行回退的 Packet 落盘到会话暂存（不入被审仓库），synthesis 时重载，抗上下文压缩；
+  - 单元数量由架构边界决定，合并会重叠的单元、仅在单单元过大时拆分，不设目标数量。
+- `SKILL.md` 新增显式执行分级（Execution sizing）：single-unit / sequential-units / parallel-units 三档，小目标单单元模式为一等公民。
+
+### Changed
+
+- `SKILL.md` description 改为显式调用语义：仅当用户点名本 skill 或明确要求全面审计时触发，普通/快速/diff-only review 请求不自动加载（重协议不劫持日常 review）。
+- Terminal result 拆分为 merge verdicts（APPROVE / APPROVE_WITH_NON_BLOCKING_FINDINGS / REQUEST_CHANGES）与终止状态（HEAD_DRIFT / INSUFFICIENT_EVIDENCE）两组。
+- Coverage 状态统一为大写（COMPLETE / PARTIAL / NOT_COVERED / INSUFFICIENT_EVIDENCE），与 `reporting-protocol.md` 权威定义一致。
+- `SKILL.md` Versioning 一节瘦身，版本政策细节移至 CHANGELOG 开头。
+- README 中英双语重写：价值前置、术语中文化、新增真实 finding 缩略示例与"何时用/何时别用"。
+
 ## [0.3.0] - 2026-09-02
 
 ### Added

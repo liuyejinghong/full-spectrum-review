@@ -1,11 +1,11 @@
 ---
 name: full-spectrum-review
-description: Comprehensive evidence-driven software audit. Reconstructs requirements from first principles, audits engineering and business correctness plus operational and performance risk, applies relevant domain packs, scales through model-neutral audit orchestration, and persists verified findings as a prioritized audit record.
+description: Heavyweight, comprehensive, evidence-driven software audit for repositories, subsystems, PRs, commits, production-readiness, and architecture. Invoke explicitly — only when the user names this skill (full-spectrum-review) or explicitly asks for a comprehensive full-spectrum audit with persisted findings; do not auto-trigger for ordinary, quick, or diff-only code review requests. Reconstructs requirements from first principles, audits engineering and business correctness plus operational and performance risk, applies relevant domain packs, scales large targets through bounded audit units with optional parallel workers, and persists verified findings as a prioritized, re-reviewable audit record.
 ---
 
 # Full-Spectrum Review
 
-Use this Skill for comprehensive repository, subsystem, PR, commit, production-readiness, or architecture audits.
+Use this Skill when explicitly invoked — by name or by an explicit request for a comprehensive audit — for repository, subsystem, PR, commit, production-readiness, or architecture audits. It is deliberately heavyweight; do not pull it into ordinary or quick review requests.
 
 Current Skill version is recorded in `VERSION`. Record that version in persisted audit metadata when available. `CHANGELOG.md` is for maintainers and should not be loaded during ordinary audits unless version/history is relevant to the task.
 
@@ -27,7 +27,7 @@ Any implementation fix is a separate follow-up task requiring explicit user auth
 
 1. **Read prior audit state.** If the target repository already contains audit reports or an audit index, read them first so finding identity, status, prior Keep-As-Is decisions, and unresolved questions survive re-review.
 2. **Bind the target.** Record repository/target and exact revision when available. For PRs, record base and head.
-3. **Create an audit plan.** Identify important subsystems, execution paths, stateful components, external boundaries, business flows, and operational surfaces. Assign intended depth such as `deep`, `sampled`, or `not-covered`.
+3. **Create an audit plan.** Identify important subsystems, execution paths, stateful components, external boundaries, business flows, and operational surfaces. Assign intended depth such as `deep`, `sampled`, or `none`.
 4. **Choose execution mode.** For large targets, use bounded Audit Units. If the current harness supports isolated workers/subagents and parallelism is materially useful, run suitable units concurrently; otherwise execute the same units sequentially. Follow `references/orchestration-protocol.md`.
 5. **Reconstruct the system.** Read repository instructions, specifications, ADRs, architecture docs, Issues/PRs, configuration, tests, and relevant operational material. Reconstruct purpose, entities, ownership, authoritative state, lifecycles, and invariants. In multi-worker mode, the Lead produces a compact Shared Audit Brief.
 6. **Apply First Principles before accepting architecture.** For important or structurally non-trivial areas, derive the required outcome, irreducible constraints, invariants, and minimum sufficient mechanism before judging the current mechanism. Read `references/first-principles-review.md`.
@@ -36,7 +36,7 @@ Any implementation fix is a separate follow-up task requiring explicit user auth
 9. **Generate candidates with high recall.** Follow behavior across changed and unchanged code where required to understand the target correctly. Worker outputs are candidate packets, not canonical findings.
 10. **Verify findings with high precision.** Apply `references/finding-protocol.md`, including disconfirmation for accidental-complexity claims. Resolve material cross-unit contradictions before final classification.
 11. **Deduplicate by root cause and rank.** The Lead preserves stable finding identity across re-reviews and centrally assigns final priority/status; workers must not allocate canonical IDs or terminal verdicts.
-12. **Finalize coverage honestly.** Mark each planned area `complete`, `partial`, `not-covered`, or `insufficient-evidence` and state why.
+12. **Finalize coverage honestly.** Mark each planned area `COMPLETE`, `PARTIAL`, `NOT_COVERED`, or `INSUFFICIENT_EVIDENCE` and state why.
 13. **Produce the canonical audit artifact.** Follow `references/reporting-protocol.md`; persist the report and audit index when writes are authorized.
 
 ## Core references
@@ -51,13 +51,23 @@ During a full audit, load the references needed for the target:
 - `references/finding-protocol.md` — canonical finding types, priority, confidence, status, evidence bar, and schema.
 - `references/reporting-protocol.md` — coverage ledger, stable audit ledger, report structure, re-review, and persistence.
 
-For a small target that clearly does not benefit from decomposition, the orchestration reference may be skipped after the Lead determines that a single bounded audit unit is sufficient.
+For a single-unit target (see Execution sizing under Audit orchestration boundary), the orchestration reference may be skipped; load only the references that unit needs.
 
 Do not duplicate normative definitions from these references in ad-hoc output.
 
 ## Audit orchestration boundary
 
 The Skill defines **logical Audit Units and packet contracts**, not a vendor-specific subagent API.
+
+### Execution sizing
+
+Size execution to the target — a general preference for "staying light" loses to concrete process, so the tiers are explicit:
+
+- **single-unit** — narrow PR, small subsystem, or bounded question: skip the orchestration reference, Shared Audit Brief, and multi-phase structure; one compact report with a short Coverage Ledger;
+- **sequential-units** — medium target, or isolated workers unavailable: the same bounded units executed one by one with durably recorded Reviewer Packets;
+- **parallel-units** — large target with isolated workers available: units run concurrently.
+
+All three modes share the same finding bar and produce the same canonical artifact. A single-unit audit is a correctly sized audit, not a lower-standard one.
 
 Prefer subsystem/flow decomposition over splitting the whole repository into one Engineering worker, one Business worker, and one Optimization worker. Each subsystem worker should apply all relevant lenses and Domain Packs inside its scope; use separate cross-cutting units only for questions such as architecture/ownership, end-to-end business lifecycle, or long-running resource behavior.
 
@@ -128,23 +138,20 @@ If repository writes are available and the user authorized audit persistence, wr
 
 ## Versioning
 
-The core Skill follows Semantic Versioning while pre-1.0 development remains explicitly experimental:
-
-- `MAJOR` — reserved for post-1.0 incompatible audit-contract changes;
-- `MINOR` — new capabilities or materially changed audit/report contracts; before 1.0, incompatible protocol changes may also increment MINOR;
-- `PATCH` — corrections/clarifications that do not materially change the audit contract.
-
-`VERSION` is the canonical current core version. `CHANGELOG.md` records user-visible protocol changes. Git tags/releases may mirror versions when maintainers choose to publish them, but ordinary audits must not depend on release infrastructure being present.
+`VERSION` is the canonical current core version; record it in Audit Metadata. Versioning policy — pre-1.0 SemVer, independently versioned Domain Packs, optional tags/releases — is defined at the top of `CHANGELOG.md`, which ordinary audits do not need to load.
 
 ## Terminal result
 
-For PR merge decisions, use one of:
+For PR merge decisions, the verdict is one of:
 
 - `APPROVE`
 - `APPROVE_WITH_NON_BLOCKING_FINDINGS`
 - `REQUEST_CHANGES`
-- `HEAD_DRIFT`
-- `INSUFFICIENT_EVIDENCE`
+
+Two conditions terminate a PR audit without a merge verdict; they are outcomes, not verdicts:
+
+- `HEAD_DRIFT` — the head moved, so the previous verdict no longer applies;
+- `INSUFFICIENT_EVIDENCE` — the available evidence cannot responsibly support any verdict.
 
 For repository-wide audits, give an overall health/risk assessment instead of forcing a merge verdict.
 
