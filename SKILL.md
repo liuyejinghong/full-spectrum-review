@@ -136,7 +136,7 @@ Passing tests are evidence, not proof of correctness, business validity, or arch
 
 A full audit is incomplete until one coherent canonical report is produced. Parallel execution does not create multiple final reports. The report may be compact for a narrow PR and extensive for a repository-wide audit, but it must still record scope/coverage, exact revision when available, Skill/Domain Pack versions when available, verified findings, priorities, and evidence.
 
-If repository writes are available and the user authorized audit persistence, write only the audit artifacts defined by `references/reporting-protocol.md`. If writes are unavailable, return the complete artifact to the user unchanged.
+Persist audit artifacts under the workspace root defined by `references/reporting-protocol.md` (`fsr-reports/<target>/`). Writing into the audited repository itself is a separate, explicitly authorized export. If no writable workspace exists, return the complete artifact to the user unchanged.
 
 ## Versioning
 

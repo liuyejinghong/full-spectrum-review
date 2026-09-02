@@ -2,7 +2,7 @@
 
 > Ordinary review skills answer "is the code correct?". This one keeps asking: is the architecture right, is the business logic right, does this mechanism deserve to exist at all? A deep-audit Skill for AI coding agents — reconstruct the problem from first principles, judge engineering correctness, business truth, reliability, and cost across module boundaries, converge symptoms into evidence-verified root causes, and persist them as a re-reviewable audit asset.
 
-**Current Core version: `v0.6.0`** · [CHANGELOG](CHANGELOG.md) · [简体中文](README.md) · **English**
+**Current Core version: `v0.7.0`** · [CHANGELOG](CHANGELOG.md) · [简体中文](README.md) · **English**
 
 ## Why this skill exists
 
@@ -55,7 +55,7 @@ Code, tests, and documentation are evidence, not automatically the definition of
 
 ### 6. An audit is an asset, not a snapshot
 
-Findings persist under stable IDs (FSR-001, FSR-002, ...) with a lifecycle: OPEN / FIXED / ACCEPTED / SUPERSEDED / REOPENED. A re-review continues from the previous conclusions; priority may change, the ID does not. Design decisions worth preserving are recorded as Keep-As-Is so later agents do not casually "simplify" them away. Repositories without their own audit convention get a lightweight ledger under `docs/reviews/` — deliberately not another Jira.
+Findings persist under stable IDs (FSR-001, FSR-002, ...) with a lifecycle: OPEN / FIXED / ACCEPTED / SUPERSEDED / REOPENED. A re-review continues from the previous conclusions; priority may change, the ID does not. Design decisions worth preserving are recorded as Keep-As-Is so later agents do not casually "simplify" them away. The ledger lives under `fsr-reports/<target>/` in the auditor's workspace — all paths workspace-relative, identical across platforms, and deliberately not another Jira.
 
 ## What a real finding looks like
 
@@ -175,7 +175,7 @@ full-spectrum-review/
 
 ## Versioning and packs
 
-[`VERSION`](VERSION) is the single source of the current Core version (pre-1.0 SemVer; policy at the top of [CHANGELOG](CHANGELOG.md)). Domain Packs version independently — Core `0.6.0` can ship alongside Trading Pack `v2`, and an audit report records both.
+[`VERSION`](VERSION) is the single source of the current Core version (pre-1.0 SemVer; policy at the top of [CHANGELOG](CHANGELOG.md)). Domain Packs version independently — Core `0.7.0` can ship alongside Trading Pack `v2`, and an audit report records both.
 
 ## References
 

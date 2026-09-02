@@ -14,7 +14,7 @@ The report must make a crucial distinction visible:
 
 ## Read prior audit state first
 
-Before a re-review, inspect the target repository's existing audit index and relevant prior reports when available.
+Before a re-review, inspect the workspace audit ledger for the target — `fsr-reports/<target>/INDEX.md` and the latest reports — and, when the audited repository carries its own committed audit convention, that too.
 
 Carry forward:
 
@@ -179,10 +179,10 @@ If one architectural correction makes several findings disappear, say so explici
 
 ## Audit index: persistent finding ledger
 
-When persistence is authorized and the repository has no equivalent convention, maintain:
+Every audited target has one working ledger in the auditor's workspace:
 
 ```text
-docs/reviews/INDEX.md
+<workspace>/fsr-reports/<target>/INDEX.md
 ```
 
 Keep it deliberately small. Recommended columns:
@@ -238,25 +238,26 @@ Do not assign P0–P3 merely to force uncertainty into the finding table.
 
 ## Persistence rules
 
-When repository writes are available and the user authorized audit persistence:
-
-1. follow an existing audit/review convention if the target already has one;
-2. otherwise use `docs/reviews/` plus `docs/reviews/INDEX.md`;
-3. write only audit artifacts — never implementation changes under audit authorization;
-4. include exact reviewed revision(s);
-5. include Core Skill and loaded Domain Pack versions when available;
-6. do not overwrite a report for a different revision;
-7. update the index after the report is finalized;
-8. keep platform inline comments concise and secondary to the canonical report.
-
-Default report filenames:
+Audit artifacts live under a fixed root relative to the current workspace — the directory the audit session runs in:
 
 ```text
-docs/reviews/<YYYY-MM-DD>-full-spectrum-review.md
-docs/reviews/pr-<number>-<short-head>-full-spectrum-review.md
+<workspace>/fsr-reports/<target>/INDEX.md
+<workspace>/fsr-reports/<target>/<YYYY-MM-DD>-full-spectrum-review.md
+<workspace>/fsr-reports/<target>/pr-<number>-<short-head>-full-spectrum-review.md
 ```
 
-If writes are unavailable, return the complete report and the index delta the maintainer would need to persist.
+`<target>` is the audited repository's name (`owner/name` when disambiguation is needed). All paths are workspace-relative: never absolute paths, OS-specific locations, or temp directories — behavior stays identical across harnesses and platforms.
+
+1. write only audit artifacts — never implementation changes under audit authorization;
+2. include exact reviewed revision(s);
+3. include Core Skill and loaded Domain Pack versions when available;
+4. do not overwrite a report for a different revision;
+5. update the INDEX after the report is finalized;
+6. keep platform inline comments concise and secondary to the canonical report.
+
+Publishing the audit into the audited repository is a separate, explicitly authorized export (read-only audit discipline): follow an existing audit/review convention there, otherwise `docs/reviews/`, and record the published location in the workspace INDEX rather than maintaining a second mutable ledger.
+
+If the harness provides no writable workspace at all, return the complete report and the index delta the maintainer would need to persist.
 
 ## Completion check
 

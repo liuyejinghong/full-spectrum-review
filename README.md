@@ -2,7 +2,7 @@
 
 > 普通的 review skill 回答"代码对不对"；full-spectrum-review 继续往上问——架构对不对，业务对不对，每个机制该不该存在。一套装进 AI Coding Agent 的深度审计 Skill：从第一性原理重建问题，跨模块审判工程正确性、业务真相、可靠性与成本，把症状收敛为证据验证过的根因，沉淀成可复审的审计资产。
 
-**当前 Core 版本：`v0.6.0`** · [CHANGELOG](CHANGELOG.md) · **简体中文** · [English](README.en.md)
+**当前 Core 版本：`v0.7.0`** · [CHANGELOG](CHANGELOG.md) · **简体中文** · [English](README.en.md)
 
 ## 为什么做这个 Skill
 
@@ -55,7 +55,7 @@
 
 ### 六、审计是资产，不是快照
 
-Finding 用稳定 ID 沉淀（FSR-001、FSR-002……）带生命周期：OPEN / FIXED / ACCEPTED / SUPERSEDED / REOPENED。复审接着上次的结论走，优先级变了 ID 不变；值得保留的设计决策记入 Keep-As-Is，防止后来的 agent 手痒"简化"掉不该动的东西。目标仓库若没有自己的审计体系，默认落在 `docs/reviews/` 的轻量台账里——不是再造一个 Jira。
+Finding 用稳定 ID 沉淀（FSR-001、FSR-002……）带生命周期：OPEN / FIXED / ACCEPTED / SUPERSEDED / REOPENED。复审接着上次的结论走，优先级变了 ID 不变；值得保留的设计决策记入 Keep-As-Is，防止后来的 agent 手痒"简化"掉不该动的东西。审计台账默认落在当前工作区的 `fsr-reports/<target>/` 下——路径全部相对工作区，跨平台不会跑偏，也不是再造一个 Jira。
 
 ## 一个真实 finding 的样子
 
@@ -172,7 +172,7 @@ full-spectrum-review/
 
 ## 版本与领域包
 
-[`VERSION`](VERSION) 唯一确定当前 Core 版本（pre-1.0 SemVer，政策见 [CHANGELOG](CHANGELOG.md) 开头）。Domain Pack 独立版本化——Core 可以是 `0.6.0`，同时 Trading Pack 是 `v2`，审计报告会同时记录二者。
+[`VERSION`](VERSION) 唯一确定当前 Core 版本（pre-1.0 SemVer，政策见 [CHANGELOG](CHANGELOG.md) 开头）。Domain Pack 独立版本化——Core 可以是 `0.7.0`，同时 Trading Pack 是 `v2`，审计报告会同时记录二者。
 
 ## 参考标准
 
