@@ -1,14 +1,71 @@
 # Audit Reporting Protocol
 
-A full-spectrum audit must end in one consolidated, persistent report. The report is the canonical artifact; chat summaries and inline comments are secondary surfaces.
+A full-spectrum audit ends in one coherent, persistent audit artifact. Chat summaries and inline review comments are secondary surfaces.
+
+This file owns report structure, coverage accounting, audit-ledger lifecycle, re-review behavior, and persistence. Finding priority/type/confidence/status/schema are owned by `finding-protocol.md`.
 
 ## Core rule
 
-**Sort by priority, then by root-cause importance.** Do not organize the main findings by file order, reviewer lens, or discovery sequence.
+Sort active findings by **priority, then root-cause importance**, not file order, lens, discovery sequence, or ID.
 
-First Principles, Engineering, Business Logic, and Optimization are dimensions used to discover and classify findings. They are not separate final reports unless the user explicitly requests that format.
+The report must make a crucial distinction visible:
 
-A correct-but-unnecessarily-complex design can be a real audit finding. Do not bury verified accidental complexity in an informal "nice to have" section merely because no current bug is reproduced.
+> **No finding found** is not the same as **not reviewed**.
+
+## Read prior audit state first
+
+Before a re-review, inspect the target repository's existing audit index and relevant prior reports when available.
+
+Carry forward:
+
+- stable finding IDs and statuses;
+- unresolved/root-cause relationships;
+- prior Keep-As-Is decisions;
+- Open Questions that remain unresolved;
+- the last reviewed revision and relevant evidence limitations.
+
+Do not silently assign new IDs to old root causes.
+
+## Coverage Ledger
+
+Every audit must contain a Coverage Ledger derived from the audit plan.
+
+Recommended fields:
+
+```markdown
+| Area / Flow | Depth | Status | Evidence / Notes |
+|---|---|---|---|
+| Order execution | deep | COMPLETE | traced submit → reconcile → position |
+| Reporting UI | sampled | PARTIAL | sampled API boundary only |
+| Legacy migration | none | NOT_COVERED | outside requested target |
+| External contract X | deep | INSUFFICIENT_EVIDENCE | contract unavailable |
+```
+
+Suggested depth values:
+
+- `deep` — end-to-end or sufficiently detailed inspection for a reliable conclusion;
+- `sampled` — representative inspection, not exhaustive;
+- `none` — intentionally not inspected.
+
+Coverage status:
+
+- `COMPLETE` — planned depth achieved with sufficient evidence;
+- `PARTIAL` — some planned evidence/path remains unreviewed;
+- `NOT_COVERED` — explicitly outside achieved audit coverage;
+- `INSUFFICIENT_EVIDENCE` — inspected, but available evidence cannot support a responsible conclusion.
+
+Use plain equivalents if the target repository prefers different terminology, but preserve the distinction.
+
+A full audit means all materially relevant areas are represented in the ledger. It does not require identical depth everywhere.
+
+## Proportional reporting
+
+The canonical artifact scales with the target.
+
+- A narrow PR may use a compact report with a short Coverage Ledger and concise P2/P3 findings.
+- A repository-wide audit may require extensive architecture/business evidence and a broader ledger.
+
+Do not drop evidence discipline because the report is short, and do not force a 30-line PR into a multi-thousand-word template when concise evidence is sufficient.
 
 ## Recommended report structure
 
@@ -18,198 +75,154 @@ A correct-but-unnecessarily-complex design can be a real audit finding. Do not b
 ## 1. Audit Metadata
 - Repository / target
 - Reviewed revision / base / head
-- Date
-- Audit scope
-- Evidence available
+- Audit date
+- Skill version/revision if known
+- Loaded Domain Packs + versions
+- Prior audit/index consulted
 - Important evidence limitations
 
-## 2. Executive Summary
+## 2. Coverage Ledger
+| Area / Flow | Depth | Status | Evidence / Notes |
+|---|---|---|---|
+
+## 3. Executive Summary
 - Overall assessment
-- Highest-risk themes
-- Whether production/merge should be blocked
-- Total findings by priority
-- Most important first-principles/simplification/performance opportunities
+- Highest-risk/root-cause themes
+- Whether merge/production should be blocked when applicable
+- Active findings by priority
+- Most important simplification/performance opportunities
 
-## 3. Priority Overview
-| Priority | Count | Meaning |
-|---|---:|---|
-| P0 | ... | ... |
-| P1 | ... | ... |
-| P2 | ... | ... |
-| P3 | ... | ... |
+## 4. Priority Overview
+| ID | Priority | Confidence | Status | Type | Area | Finding | Impact |
+|---|---|---|---|---|---|---|---|
 
-## 4. Recommended Execution Order
-1. Fix the first root cause...
+## 5. Recommended Execution Order
+1. Fix the root cause that invalidates downstream work...
 2. Then address...
-3. Then simplify/optimize...
 
-## 5. Findings — P0 Critical
+## 6+. Findings — P0 → P1 → P2 → P3
 ...
 
-## 6. Findings — P1 High
-...
+## Open Questions for the Maintainer
+- Material intent/contract questions that cannot responsibly be turned into findings
 
-## 7. Findings — P2 Medium
-...
+## Positive Findings / Keep As-Is
+- Important proven invariants/design choices worth preserving
 
-## 8. Findings — P3 Low
-...
+## Evidence / Verification Gaps
+- Important uncertainty that cannot responsibly be assigned a finding priority
 
-## 9. Positive Findings / Keep As-Is
-- Sound architecture or invariant worth preserving
-- Existing mechanism that should not be replaced without evidence
-
-## 10. Test / Verification Gaps
-- Important behavior not proven by current evidence
-
-## 11. Appendix
-- Commands/tests/benchmarks inspected or executed
-- Architecture/business-rule/first-principles notes when useful
+## Appendix
+- Commands/tests/benchmarks/contracts/history inspected when useful
 ```
 
-Skip empty priority sections, but never hide the fact that no findings exist at a priority.
+Skip empty detailed priority sections if doing so improves signal, but the Priority Overview or Executive Summary must make zero counts clear.
 
-## Priority overview
+Use the canonical finding schema and prose depth rules from `finding-protocol.md` instead of redefining another schema here.
 
-At the top of the report, include a compact table listing each finding in final priority order:
+## Recommended Execution Order
 
-```markdown
-| ID | Priority | Type | Area | Finding | Impact |
-|---|---|---|---|---|---|
-| FSR-001 | P0 | Defect | Business / Trading | ... | ... |
-| FSR-002 | P1 | Reliability | Execution | ... | ... |
-| FSR-003 | P2 | Accidental Complexity | Architecture | ... | ... |
-```
+Priority alone is insufficient when fixes depend on each other.
 
-Use stable IDs (`FSR-001`, `FSR-002`, ...). IDs follow final priority order, not discovery order.
+Order remediation by:
 
-## Finding types
-
-Use one of these when useful:
-
-- `Defect` — implementation or behavior is wrong;
-- `Business` — domain/business semantics are wrong or incomplete;
-- `Reliability` — failure/recovery/concurrency/state behavior is unsafe;
-- `Performance` — real workload/resource inefficiency with meaningful impact;
-- `Accidental Complexity` — current requirements can be satisfied by a materially simpler sufficient mechanism and the extra layers carry no independent current requirement while increasing state/failure/maintenance/operational cost;
-- `Optimization` — current behavior is correct but materially more costly than necessary;
-- `Maintainability` — concrete entropy or ownership problem likely to cause future defects;
-- `Security` — real trust-boundary or privilege defect;
-- `Test Gap` — important behavior is materially unproven.
-
-A finding may include multiple area tags, but keep one primary type.
-
-## Detailed finding format
-
-Each detailed finding should normally contain:
-
-```markdown
-### FSR-00X — [P?] Short title
-
-**Type:** Defect / Business / Reliability / Performance / Accidental Complexity / Optimization / ...
-**Area:** module / business flow / subsystem
-**Evidence:** `path:line`, tests, contract, benchmark, external semantics
-
-**Problem / Opportunity**
-What is wrong or unnecessarily complex/expensive.
-
-**Trigger / Workload**
-The realistic scenario or workload that exposes it.
-
-**Mechanism**
-Why the current system produces the result.
-
-**Impact**
-What actually happens and why the assigned priority is justified.
-
-**Recommended direction**
-The smallest sensible correction or simplification direction. Do not write a full implementation unless requested.
-
-**Verification**
-What test, scenario, measurement, or invariant should prove the fix safe.
-```
-
-For First-Principles / Accidental-Complexity findings, use the stronger shape below when it improves clarity:
-
-```markdown
-**Required outcome**
-What the subsystem actually must accomplish.
-
-**Irreducible constraints / invariants**
-What a valid solution cannot violate.
-
-**Minimum sufficient mechanism**
-The smallest conceptual mechanism that satisfies those requirements.
-
-**Current mechanism**
-The actual states, owners, workers, caches, retries, wrappers, or recovery layers.
-
-**Accidental complexity delta**
-Which extra layers do not carry an independent current requirement and what cost they create.
-
-**Simplification direction**
-What responsibility boundary/state model can be removed or consolidated.
-
-**Behavior-preservation plan**
-How to prove the simplified mechanism preserves all required semantics.
-```
-
-Do not use this type merely because code looks verbose. The report must demonstrate the simpler sufficient mechanism and preserved responsibilities.
-
-## Recommended execution order
-
-Priority alone is not always sufficient. Dependencies between fixes matter.
-
-After ranking findings, produce a recommended remediation sequence that considers:
-
-1. stop-the-bleeding production/real-money risk;
-2. first-principles/root-cause corrections that invalidate multiple downstream patches;
+1. immediate production/real-money safety;
+2. root causes that invalidate downstream fixes;
 3. authoritative state/ownership corrections;
-4. correctness and recovery defects;
+4. correctness/business/recovery defects;
 5. performance/stability bottlenecks;
-6. simplification and entropy reduction;
+6. accidental-complexity and entropy reduction;
 7. lower-impact cleanup.
 
-If one ownership or architectural correction makes several lower-priority findings disappear, say so explicitly rather than recommending independent patches.
+If one architectural correction makes several findings disappear, say so explicitly. Existing downstream IDs remain in the audit ledger and may become `SUPERSEDED` after verification.
 
-## Positive findings
+## Audit index: persistent finding ledger
 
-A comprehensive audit should also identify a small number of important things that are already sound when evidence supports it. This helps prevent later agents from "optimizing" away valuable invariants or architecture.
+When persistence is authorized and the repository has no equivalent convention, maintain:
 
-Do not add praise for politeness. Include only design choices worth preserving.
+```text
+docs/reviews/INDEX.md
+```
+
+Keep it deliberately small. Recommended columns:
+
+```markdown
+| ID | Title | First Seen | Current Priority | Status | Latest Audit |
+|---|---|---|---|---|---|
+```
+
+The index is not an issue tracker. Do not add assignees, dates, milestones, labels, or workflow machinery unless the repository already uses them and the user requests integration.
+
+### ID lifecycle
+
+- allocate each new root cause a new monotonic ID;
+- never renumber because sorting/priority changes;
+- never reuse an old ID for a different problem;
+- update status/priority/latest-audit on re-review;
+- preserve historical reports for the exact revisions they audited.
+
+## Re-review lifecycle
+
+A new audit should classify prior findings before inventing replacements:
+
+- still present → same ID remains `OPEN`;
+- verified corrected → `FIXED`;
+- consciously retained with rationale → `ACCEPTED`;
+- replaced by a better root-cause finding → `SUPERSEDED` and link the successor;
+- returned after being closed → `REOPENED`.
+
+A finding's priority may change without changing its ID.
+
+## Positive Findings / Keep As-Is persistence
+
+Include only important choices supported by evidence, such as authoritative-state boundaries, invariants, or recovery semantics that later agents should not casually "simplify."
+
+On re-review, read prior Keep-As-Is entries. If new evidence justifies overturning one, say so explicitly; otherwise treat it as a design constraint worth preserving.
+
+Do not add praise for politeness.
+
+## Open Questions vs findings
+
+Use `Open Questions for the Maintainer` when required business/product intent cannot be established confidently enough for a finding.
+
+An Open Question should state:
+
+- what decision/intent is ambiguous;
+- what evidence conflicts or is missing;
+- which conclusions depend on the answer.
+
+Do not assign P0–P3 merely to force uncertainty into the finding table.
 
 ## Persistence rules
 
-When the audited repository is writable and the user authorized writes:
+When repository writes are available and the user authorized audit persistence:
 
-1. follow an existing repository convention for audit/review docs if present;
-2. otherwise create `docs/reviews/`;
-3. persist the complete report as Markdown;
-4. include the exact revision(s) reviewed;
-5. do not overwrite an older audit for a different revision;
-6. use a new report or clearly marked re-review section for a new head;
-7. keep inline PR comments concise and point to the canonical report when appropriate.
+1. follow an existing audit/review convention if the target already has one;
+2. otherwise use `docs/reviews/` plus `docs/reviews/INDEX.md`;
+3. write only audit artifacts — never implementation changes under audit authorization;
+4. include exact reviewed revision(s);
+5. do not overwrite a report for a different revision;
+6. update the index after the report is finalized;
+7. keep platform inline comments concise and secondary to the canonical report.
 
-Default filenames:
+Default report filenames:
 
 ```text
 docs/reviews/<YYYY-MM-DD>-full-spectrum-review.md
 docs/reviews/pr-<number>-<short-head>-full-spectrum-review.md
 ```
 
-If writes are not available, provide the report in full and state that persistence could not be performed.
+If writes are unavailable, return the complete report and the index delta the maintainer would need to persist.
 
-## Completeness check before finalizing
+## Completion check
 
-Before declaring the audit complete, verify:
+Before declaring the audit complete, verify facts rather than self-certifying a checklist:
 
-- first-principles reconstruction was performed for important subsystems rather than assuming the current architecture is necessary;
-- all other applicable review lenses were exercised;
-- high-risk architecture/business flows were traced end-to-end;
-- accidental-complexity findings demonstrate a simpler sufficient mechanism and preserved invariants;
-- findings were verified and deduplicated;
-- priority reflects impact rather than reviewer confidence;
-- findings are ordered P0 → P1 → P2 → P3;
-- remediation dependencies are reflected in execution order;
-- important evidence gaps are explicit;
-- the report is saved or returned as a complete reusable artifact.
+- the Coverage Ledger represents every materially relevant planned area;
+- `PARTIAL`, `NOT_COVERED`, and `INSUFFICIENT_EVIDENCE` are explicit rather than hidden behind "no finding";
+- applicable Domain Packs and versions are recorded;
+- prior stable IDs/statuses were reconciled on re-review;
+- findings passed `finding-protocol.md` and were root-cause deduplicated;
+- Recommended Execution Order reflects dependencies;
+- unresolved business intent is in Open Questions;
+- the report and index are persisted or returned as complete reusable artifacts.
