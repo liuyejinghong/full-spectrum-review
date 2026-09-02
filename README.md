@@ -1,32 +1,34 @@
 # Full-Spectrum Review
 
-A model-neutral, open Agent Skill for independent software review.
+> **简体中文** · [English](README.en.md)
 
-Instead of giving one reviewer a giant checklist, Full-Spectrum Review separates review into three independent axes:
+一个**模型无关**的开源 Agent Skill，用于独立的软件工程审查。
 
-| Axis | Core question |
+它不把所有审查要求塞进一份巨型 Prompt，而是拆成三个彼此独立的审查轴：
+
+| 审查轴 | 核心问题 |
 |---|---|
-| **Engineering Review** | Is the implementation correct, reliable, safe, and well integrated? |
-| **Business Logic Audit** | Does the implemented behavior correctly represent the intended domain reality? |
-| **Optimization & Simplification Review** | Can the same required behavior be delivered with less code, state, cost, complexity, and failure surface? |
+| **Engineering Review** | 实现本身是否正确、可靠、安全，并且和上下游正确集成？ |
+| **Business Logic Audit** | 系统实际执行的行为，是否真正符合业务/领域现实？ |
+| **Optimization & Simplification Review** | 在保持必要行为不变的前提下，能否用更少代码、状态、成本、复杂度和故障面完成同样目标？ |
 
-Candidate findings are generated independently, then verified through one evidence protocol and deduplicated by root cause.
+三个方向先独立生成候选 finding，再通过统一的证据协议验证，并按根因去重。
 
-## Why three axes?
+## 为什么拆成三个方向？
 
-Different reviewers should be allowed to disagree productively.
+不同 reviewer 应该被允许从不同角度得出相反建议。
 
-An Engineering reviewer may suggest another guard. An Optimization reviewer should be free to ask whether that guard is compensating for duplicated state or confused ownership. A Business reviewer establishes the domain invariant that either design must preserve.
+Engineering reviewer 可能认为“这里应该再加一个保护”；Optimization reviewer 应该可以反问：“这个保护是不是在补偿一个错误的 ownership 或重复状态模型？”；Business reviewer 则负责确定无论怎么实现，都必须保持哪些业务 invariant。
 
-Keeping the axes separate reduces anchoring and makes independent third-party review materially more independent.
+这种结构比让所有模型吃同一张超长 checklist 更能保持第三方审查的独立性。
 
-## Structure
+## 目录
 
 ```text
 full-spectrum-review/
 ├── SKILL.md
 ├── README.md
-├── README.zh-CN.md
+├── README.en.md
 ├── LICENSE
 ├── ACKNOWLEDGEMENTS.md
 └── references/
@@ -37,78 +39,86 @@ full-spectrum-review/
     └── trading-domain.md
 ```
 
-`SKILL.md` stays intentionally compact. Detailed review guidance lives under `references/` and is loaded only when the selected review axis needs it.
+`SKILL.md` 故意保持精简；详细检查项放进 `references/`，只有对应审查轴需要时才加载，避免浪费上下文和稀释注意力。
 
-## Install
+## 安装
 
-This repository follows the open Agent Skills `SKILL.md` format. Clone or copy the repository as a skill directory for your client.
+本仓库遵循开放的 Agent Skills `SKILL.md` 格式。把整个仓库 clone/copy 到你的 AI 客户端 Skill 目录即可。
 
-Examples:
+例如：
 
 ```bash
-# Claude Code — user scope
+# Claude Code，用户级
 git clone https://github.com/liuyejinghong/full-spectrum-review.git ~/.claude/skills/full-spectrum-review
 
-# Codex — user scope
+# Codex，用户级
 git clone https://github.com/liuyejinghong/full-spectrum-review.git ~/.codex/skills/full-spectrum-review
 ```
 
-Project-scoped locations vary by client. Common locations include `.claude/skills/`, `.codex/skills/`, `.cursor/skills/`, `.gemini/skills/`, and `.github/skills/`.
+不同客户端的项目级目录可能不同，常见位置包括：
 
-If your client supports Agent Skills but uses a different discovery path, place this directory at that client's documented skill location.
+```text
+.claude/skills/
+.codex/skills/
+.cursor/skills/
+.gemini/skills/
+.github/skills/
+```
 
-## Use
+如果你的 Agent 支持 Agent Skills 但使用其他发现路径，按该客户端文档把此目录放进去即可。
 
-### Full review
+## 使用示例
+
+### 全方位审查
 
 ```text
 Use the full-spectrum-review skill to review PR #123.
 Run Engineering, Business Logic, and Optimization/Simplification as independent passes, then verify and deduplicate findings. Bind the verdict to the exact PR head.
 ```
 
-### Business-only audit
+### 只审业务逻辑
 
 ```text
 Use full-spectrum-review in Business Logic mode.
 Reconstruct the domain rules and invariants before judging the implementation. Focus on business-semantic mismatches rather than code style.
 ```
 
-### Optimization-only audit
+### 只做优化/精简审查
 
 ```text
 Use full-spectrum-review in Optimization & Simplification mode.
 Preserve required behavior. Prioritize deleting duplicated state, responsibility, recovery machinery, and redundant work over adding new abstractions or micro-optimizations.
 ```
 
-### Real-money trading system
+### 真实资金交易系统
 
 ```text
 Use full-spectrum-review with the trading-domain pack.
 Review the exact commit for engineering correctness, business semantics, and behavior-preserving simplification. Treat unknown exchange/order state as something that requires reconciliation rather than an implicit success/failure.
 ```
 
-## Design principles
+## 核心设计原则
 
-- Specialized review passes beat one giant checklist.
-- Spec and domain reconstruction come before implementation judgment.
-- Candidate generation favors recall; durable findings require evidence.
-- Tests are evidence, not proof.
-- Changed lines are the starting point, not the reasoning boundary.
-- Reachable failures matter; merely constructible hypotheticals do not.
-- Optimization must preserve required behavior and account for transferred responsibilities.
-- Reducing state and ownership ambiguity can improve reliability more than adding guards.
-- PR verdicts should be exact-head-bound whenever the platform exposes the head SHA.
-- The number of comments is not a quality metric.
+- 专项独立审查优于一份巨型 checklist。
+- 先还原 specification / domain，再判断代码。
+- 候选发现阶段追求高召回；真正发布 finding 时追求高证据门槛。
+- 测试是证据，不是真理。
+- changed lines 是审查起点，不是 reasoning 边界。
+- 真实可达的失败场景值得审；仅理论上可构造的不算。
+- 优化必须保持业务行为，并解释被删除责任由谁承担。
+- 减少重复状态和 ownership 模糊，往往比继续加 guard 更能提高稳定性。
+- PR verdict 应尽可能绑定 exact head SHA。
+- finding 数量不是审查质量指标。
 
-## Domain packs
+## Domain Pack
 
-The core skill is domain-neutral. Optional reference packs can extend it without bloating the base prompt.
+核心 Skill 保持领域无关。需要时再加载额外领域包。
 
-The first included pack is:
+当前包含：
 
-- `references/trading-domain.md` — market-data timing, backtest/live parity, order lifecycle, partial fills, unknown outcomes, reconciliation, position truth, precision, accounting, protection orders, and operator takeover.
+- `references/trading-domain.md`：行情时间语义、未来函数、回测/模拟/实盘一致性、订单生命周期、部分成交、未知订单结果、幂等、仓位 truth、重启 reconciliation、精度、PnL/费用、保护单、人工接管等。
 
-Additional domain packs can be added without changing the three-axis review model.
+后续可以继续增加支付、电商、金融账务、工作流等领域包，而不改变三轴 Review 架构。
 
 ## License
 
