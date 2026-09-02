@@ -1,158 +1,110 @@
 ---
 name: full-spectrum-review
-description: Comprehensive evidence-driven software audit. Reconstructs requirements from first principles, then reviews engineering correctness, business/domain logic, architecture, reliability, performance, simplification, maintainability, security, testing, and operations; verified findings are consolidated into a prioritized persistent audit report.
+description: Comprehensive evidence-driven software audit. Reconstructs requirements from first principles, audits engineering and business correctness plus operational and performance risk, applies relevant domain packs, and persists verified findings as a prioritized audit record.
 ---
 
 # Full-Spectrum Review
 
-Use this Skill when the user asks for a comprehensive review, audit, health check, production-readiness assessment, codebase review, PR review, or repository review.
+Use this Skill for comprehensive repository, subsystem, PR, commit, production-readiness, or architecture audits.
 
-## Default behavior
+## Default contract
 
-**A normal invocation means a full audit.** Do not ask the user to choose review axes unless they explicitly request a narrow audit.
+A normal invocation means a **full audit of the requested target**. Do not ask the user to choose review axes unless they explicitly request a narrow audit.
 
-The audit must cover, as applicable to the target:
+"Full" means every materially relevant subsystem, boundary, business flow, and risk dimension is included in the audit plan and receives an explicit coverage status. It does **not** mean every file must be read at identical depth.
 
-1. first-principles reconstruction and accidental complexity;
-2. engineering correctness and contract propagation;
-3. business/domain logic and invariants;
-4. architecture, ownership, boundaries, and sources of truth;
-5. failure handling, recovery, restart, idempotency, and concurrency;
-6. data integrity, compatibility, configuration, migration, and external-system semantics;
-7. performance, I/O, memory, resource use, scalability, and long-running stability;
-8. simplification, redundancy removal, dead code, over-engineering, and dependency/configuration bloat;
-9. tests, observability, operability, deployment, rollback, and maintenance risk;
-10. security and trust boundaries where real untrusted inputs or privileges exist;
-11. domain-specific risks from an applicable domain pack.
+For a PR or commit, the target is the change and all materially affected contracts, callers, callees, state, tests, operations, and business behavior. For a repository audit, the target is the repository's important production and business behavior.
 
-The files under `references/` are review lenses, not separate products. Load and use all relevant lenses during a full audit:
+## Read-only audit discipline
 
-- `references/first-principles-review.md`
-- `references/engineering-review.md`
-- `references/business-logic-review.md`
-- `references/optimization-review.md`
-- `references/finding-protocol.md`
-- `references/reporting-protocol.md`
+The audited implementation is **read-only by default**. Repository write authorization permits writing audit artifacts only; it does not authorize modifying audited source code, configuration, migrations, runtime behavior, or business data.
 
-For trading or real-money systems also read `references/trading-domain.md`.
+Any implementation fix is a separate follow-up task requiring explicit user authorization. Do not "fix while reviewing."
 
-## First-principles rule
+## Core workflow
 
-Do not accept the current architecture as the definition of the problem.
+1. **Read prior audit state.** If the target repository already contains audit reports or an audit index, read them first so finding identity, status, prior Keep-As-Is decisions, and unresolved questions survive re-review.
+2. **Bind the target.** Record repository/target and exact revision when available. For PRs, record base and head.
+3. **Create an audit plan.** Identify important subsystems, execution paths, stateful components, external boundaries, business flows, and operational surfaces. Assign intended depth such as `deep`, `sampled`, or `not-covered`.
+4. **Reconstruct the system.** Read repository instructions, specifications, ADRs, architecture docs, Issues/PRs, configuration, tests, and relevant operational material. Reconstruct purpose, entities, ownership, authoritative state, lifecycles, and invariants.
+5. **Apply First Principles before accepting architecture.** For important or structurally non-trivial areas, derive the required outcome, irreducible constraints, invariants, and minimum sufficient mechanism before judging the current mechanism. Read `references/first-principles-review.md`.
+6. **Select Domain Packs.** Inspect available Domain Packs, load every applicable pack, and record which packs were used. Follow the Domain Pack rules below.
+7. **Run all applicable core lenses.** Read and apply the engineering, business, and optimization references. These are reasoning lenses, not separate final reports.
+8. **Generate candidates with high recall.** Follow behavior across changed and unchanged code where required to understand the target correctly.
+9. **Verify findings with high precision.** Apply `references/finding-protocol.md`, including disconfirmation for accidental-complexity claims.
+10. **Deduplicate by root cause and rank.** Preserve stable finding identity across re-reviews; do not renumber findings because priority changes.
+11. **Finalize coverage honestly.** Mark each planned area `complete`, `partial`, `not-covered`, or `insufficient-evidence` and state why.
+12. **Produce the canonical audit artifact.** Follow `references/reporting-protocol.md`; persist the report and audit index when writes are authorized.
 
-Before deeply evaluating an important subsystem's implementation, independently reconstruct:
+## Core references
 
-1. the required externally meaningful outcome;
-2. the real irreducible constraints;
-3. the invariants any valid implementation must preserve;
-4. the minimum sufficient conceptual mechanism.
+During a full audit, load the references needed for the target:
 
-Then compare that model with the current implementation.
+- `references/first-principles-review.md` — **Necessity**: what must exist, what is accidental complexity.
+- `references/engineering-review.md` — correctness, contracts, state, failure/recovery, concurrency, data, compatibility, tests, operations.
+- `references/business-logic-review.md` — domain truth, business rules, invariants, lifecycle, timing, economics, external reality.
+- `references/optimization-review.md` — **Cost**: given justified mechanisms, evaluate algorithmic, CPU, memory, I/O, network, concurrency, resource, and external-service cost.
+- `references/finding-protocol.md` — canonical finding types, priority, confidence, status, evidence bar, and schema.
+- `references/reporting-protocol.md` — coverage ledger, stable audit ledger, report structure, re-review, and persistence.
 
-Challenge every additional state, owner, worker, queue, cache, retry, fallback, watchdog, wrapper, abstraction, compatibility layer, and configuration branch by asking what **current independent requirement** it satisfies.
+Do not duplicate their normative definitions in ad-hoc output.
 
-If the same current requirements could be satisfied by a materially simpler mechanism, and the extra layers carry no independent requirement while adding state space, synchronization, recovery paths, operational burden, resource cost, or maintenance risk, treat that difference as candidate **accidental complexity** even if no current bug is reproduced.
+## Domain Pack contract
 
-This is not a mandate for minimum line count. Real business, concurrency, failure, compatibility, and performance constraints may require substantial complexity. Do not remove a layer unless its responsibility is either unnecessary or safely transferred while all required behavior and invariants remain preserved.
+Domain knowledge is extensible and must not be hard-coded into the core Skill.
 
-Read and follow `references/first-principles-review.md`.
+Bundled packs live under `domains/<domain>/DOMAIN.md`. Also consider project/private Domain Packs that the current Agent harness makes available. Inspect pack metadata and load **all** packs whose applicability matches the audited system; zero, one, or several packs may apply.
 
-## Audit objective
+A Domain Pack may add:
 
-The goal is not to produce many comments. The goal is to produce a **decision-useful, prioritized technical audit artifact** that tells maintainers:
+- domain vocabulary and concept distinctions;
+- domain invariants;
+- external-system semantics;
+- domain-specific scenario sweeps and failure patterns;
+- domain-specific severity context.
 
-- what is actually wrong or materially weak;
-- where the design is more complex than the requirements justify;
-- why it matters;
-- what evidence proves it;
-- what should be fixed first;
-- what can be simplified or removed;
-- what is already sound and should not be churned;
-- what remains uncertain because evidence is missing.
+A Domain Pack must **not** redefine the core priority model, finding verification bar, report schema, or First-Principles method. Core contracts win on conflict. When packs overlap, combine the domain facts and deduplicate the final finding by root cause; do not emit duplicate findings merely because two packs surfaced the same issue.
 
-## Evidence order
+Read `domains/_CONTRACT.md` for the pack format. Record loaded packs and versions in Audit Metadata.
 
-Before judging implementation:
+## First-Principles boundary
 
-1. identify the exact review target and available source revision;
-2. read repository instructions, README, architecture docs, specifications, Issues/PR descriptions, ADRs, configuration, and relevant operational docs;
-3. reconstruct the system's purpose, major flows, domain entities, ownership, authoritative state, and critical invariants;
-4. perform first-principles reconstruction of important subsystems **before accepting their existing architecture as necessary**;
-5. map the actual architecture and execution/data paths, then compare them with the minimum sufficient mechanisms;
-6. inspect the implementation and enough surrounding code to understand callers, callees, persistence, external APIs, configuration, tests, and failure boundaries;
-7. run all remaining applicable audit lenses;
-8. generate candidate findings with high recall, including accidental-complexity candidates;
-9. verify every publishable finding using `references/finding-protocol.md`;
-10. deduplicate by root cause and rank by priority;
-11. produce and persist the audit report using `references/reporting-protocol.md`.
+First Principles answers **"does this mechanism need to exist?"** It owns accidental complexity, duplicated ownership/state, unnecessary abstraction, unnecessary recovery layers, obsolete compatibility/configuration paths, and minimum-sufficient-mechanism reasoning.
 
-## Comprehensive scope
+Optimization answers **"given that the mechanism is justified, is its runtime/operational cost reasonable?"** If an optimization investigation reveals that a layer is unnecessary rather than merely expensive, hand that conclusion to the First-Principles bar instead of maintaining two competing rules.
 
-For a repository audit, review the system broadly enough to form a reliable view of its architecture and critical behavior. Prioritize high-value execution paths, stateful subsystems, external boundaries, production/runtime paths, and business-critical flows; do not waste effort enumerating trivial style issues.
+## Business authority discipline
 
-For a PR or commit audit, the change is the primary scope, but changed lines are only the starting point. Follow affected contracts and behavior into unchanged callers, callees, state, tests, and external interfaces when required to judge the change correctly.
+Do not assume code, tests, docs, or current behavior are automatically business truth. Build a target-specific **Business Authority Map** from available external contracts, specifications/ADRs, user-facing commitments, tests, and implementation evidence. State material conflicts.
 
-## Independence of reasoning
-
-First Principles, Engineering, Business Logic, and Optimization/Simplification are distinct reasoning lenses. During candidate generation, avoid letting a tentative conclusion from one lens prematurely close another line of inquiry.
-
-In particular, do not let the existence of passing tests or a bug-free implementation prove that the design itself is justified. A function can behave correctly while solving the problem through unnecessary machinery.
-
-After candidate generation, combine all lenses into one root-cause-oriented result. The user should receive **one coherent audit**, not disconnected mini-reviews.
+If required business intent cannot be established with sufficient confidence, record an Open Question rather than manufacturing a business finding.
 
 ## Exact-revision discipline
 
-When reviewing a PR or moving branch and the platform exposes commit SHAs, bind the audit to the exact reviewed revision.
+When the platform exposes revisions, bind the audit to the exact reviewed revision. If the user supplied an expected head and the current head differs, report drift instead of silently applying an old conclusion to new code.
 
-If the user supplied an expected head and the current head differs, report revision drift rather than silently applying an old conclusion to new code.
-
-Recheck the current head immediately before a terminal PR verdict.
+For a PR, re-read the current head immediately before a terminal verdict. A drifted head invalidates the old terminal verdict but does not invalidate already persisted historical evidence for the old revision.
 
 ## Anti-noise rules
 
-Do not report:
+Do not publish:
 
 - style preferences without meaningful correctness, maintenance, or efficiency impact;
-- "over-engineered" judgments that cannot identify a simpler sufficient mechanism and preserved invariants;
 - hypothetical edge cases unreachable through supported behavior;
 - speculative security hardening without a real trust boundary or attack path;
 - micro-optimizations without a plausible meaningful workload;
-- additional wrappers, feature flags, compatibility layers, migration frameworks, checksums, or defensive machinery without a real current requirement;
-- unrelated historical debt that does not materially affect the audited system or change;
+- extra wrappers, flags, compatibility layers, migration frameworks, checksums, or defensive machinery without a current requirement;
+- "over-engineered" judgments that cannot identify a simpler sufficient mechanism and investigate why the current layer exists;
+- unrelated historical debt outside the audited target's meaningful behavior;
 - duplicate symptoms of one root cause as separate findings.
 
-High recall is desirable while exploring. High precision is mandatory in the final report.
+Passing tests are evidence, not proof of correctness, business validity, or architectural necessity.
 
 ## Required deliverable
 
-A full audit is incomplete until a consolidated report is produced.
+A full audit is incomplete until one coherent canonical report is produced. The report may be compact for a narrow PR and extensive for a repository-wide audit, but it must still record scope/coverage, exact revision when available, verified findings, priorities, and evidence.
 
-If repository writes are available and authorized, persist the report in the audited repository. Follow an existing audit/review-doc convention if one exists. Otherwise default to:
-
-```text
-docs/reviews/<YYYY-MM-DD>-full-spectrum-review.md
-```
-
-For a specific PR or revision, prefer a stable target-aware name such as:
-
-```text
-docs/reviews/pr-<number>-<short-head>-full-spectrum-review.md
-```
-
-If repository writes are unavailable, return the complete report to the user so it can be saved unchanged.
-
-The report must be sorted by priority, not by discovery order or file order. Read and follow `references/reporting-protocol.md`.
-
-## Priority model
-
-Use:
-
-- `P0 — Critical`: catastrophic loss/corruption, systemic compromise, or unrecoverable production state.
-- `P1 — High`: realistic major correctness, business, state, recovery, security, performance, or production failure; may also include accidental complexity that materially obscures ownership/safety in a core production path.
-- `P2 — Medium`: real defect, significant weakness, meaningful optimization, or material accidental complexity that increases state space, failure surface, operational burden, or maintenance risk.
-- `P3 — Low`: concrete non-blocking improvement with limited impact.
-
-Do not inflate priority. Optional cleanup or aesthetic simplification should not become P0/P1/P2.
+If repository writes are available and the user authorized audit persistence, write only the audit artifacts defined by `references/reporting-protocol.md`. If writes are unavailable, return the complete artifact to the user unchanged.
 
 ## Terminal result
 
@@ -164,6 +116,6 @@ For PR merge decisions, use one of:
 - `HEAD_DRIFT`
 - `INSUFFICIENT_EVIDENCE`
 
-For repository-wide audits, give an overall health/risk assessment rather than forcing a merge verdict.
+For repository-wide audits, give an overall health/risk assessment instead of forcing a merge verdict.
 
-The audit is successful when a maintainer can read the report from top to bottom and immediately know **what to fix first, why, what can be removed, and what evidence supports that priority**.
+The audit succeeds when a maintainer can tell **what was actually covered, what matters most, what to fix first, why, what remains uncertain, and what should be preserved**.
