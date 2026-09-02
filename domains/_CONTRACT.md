@@ -130,6 +130,32 @@ Organizations may maintain private packs for internal settlement, risk, complian
 
 A private pack should be discoverable through whatever skill/project paths the current Agent harness supports; do not require forking this repository or editing the core Skill solely to add private domain knowledge.
 
+## Distilling pack content
+
+Packs are distilled from three source types with different evidentiary characters, plus a shared curation gate.
+
+### From incident postmortems
+
+Each postmortem yields a generalized mechanism (project names, parameters, and version numbers removed), its trigger, a classification, and a verify/challenge phrasing. Test generality by asking whether the clause would still catch the problem in a different stack and at a different scale within the domain.
+
+### From regulatory frameworks
+
+Extract control **categories**, not legal text. Translate each category into a verify/challenge question and state its applicability honestly: the control category is domain truth; the legal obligation is jurisdiction- and role-dependent and travels as a scope note, not as a claim on the target.
+
+### From reference implementations
+
+Extract how mature systems answer a failure class, then phrase it as a comparative question. **Convergence is the evidence**: multiple independent implementations reaching the same design answer earns a clause; a single project's design choice is a reference, never a rule. These clauses remain subject to the experience-not-law framing.
+
+### Shared curation gate
+
+Every candidate clause must pass:
+
+1. **generality test** — holds in a different system in the domain, or is explicitly feature-conditional;
+2. **no source-system vocabulary** — plain domain terms only;
+3. **experience-not-law framing** — evidenced target deviations are recorded, never forced into compliance;
+4. **correct section** per this contract (glossary / invariant / external semantics / scenario / severity), without duplicating core method;
+5. **cost evidence** — at least one of: a real incident, a regulatory mandate, or independent reference convergence. Absent all three, it is a preference, not pack content.
+
 ## Quality bar for a new pack
 
 A pack is worth adding when it contributes knowledge that a competent domain-neutral software reviewer would not reliably infer from source code alone.

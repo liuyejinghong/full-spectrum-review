@@ -1,6 +1,6 @@
 ---
 domain: trading
-version: 3
+version: 4
 applies-when:
   - system consumes market data or generates trading signals
   - system submits, manages, cancels, reconciles, or accounts for orders and positions
@@ -16,7 +16,7 @@ Use this pack for exchange/broker trading systems, including systematic/quant tr
 
 This pack supplies **trading-specific facts and scenarios**. Generic retry, concurrency, evidence, priority, First-Principles, and reporting rules remain owned by core.
 
-This pack is distilled review experience — production incident postmortems of live trading systems (silent data-chain freezes, protection churn loops, rollback incidents, cross-endpoint misreads), venue contracts, and production practice — generalized without referencing any deployment. It is high-value experience to check, **not universal law**: every statement is a verify/challenge question that has been true often enough, and cost enough, to be worth asking on every audit. A target may have a legitimate, evidenced reason to differ — when it does, record the reasoning instead of forcing compliance. Statements conditioned on features the target does not have (runners, tiered exits, release machinery, a notification pipeline) simply do not apply. Where this pack conflicts with the actual venue contract or the target's evidenced business requirements, those win and the conflict is recorded. Most statements assume a system that holds positions over time, manages protection orders, restarts, and reconciles against a venue.
+This pack is distilled review experience from three source types — production incident postmortems of live trading systems (silent data-chain freezes, protection churn loops, rollback incidents, cross-endpoint misreads), regulatory control categories for algorithmic trading (translated into review questions, obligation-scoped), and reference-implementation convergence across mature open-source trading platforms — generalized without referencing any deployment. It is high-value experience to check, **not universal law**: every statement is a verify/challenge question that has been true often enough, and cost enough, to be worth asking on every audit. A target may have a legitimate, evidenced reason to differ — when it does, record the reasoning instead of forcing compliance. Statements conditioned on features the target does not have (runners, tiered exits, release machinery, a notification pipeline) simply do not apply. Where this pack conflicts with the actual venue contract or the target's evidenced business requirements, those win and the conflict is recorded. Most statements assume a system that holds positions over time, manages protection orders, restarts, and reconciles against a venue.
 
 ## Domain Glossary
 
@@ -89,7 +89,9 @@ Verify as applicable:
 - representation semantics on read-back: an omitted field may be normalized to a default, `quantity=0` may mean full coverage, and a 200-level envelope may still carry a business failure code;
 - economic values reported by different endpoints (order avgPrice vs position entryPrice) must be precision-normalized before comparison — exact float equality across endpoints reclassifies your own position as external drift;
 - the signature input must be byte-identical to the transmitted body: one serialization feeds both signing and dispatch, boolean/number formatting included;
-- every venue rejection is logged with the authoritative error code and response body — transport status alone is unattributable.
+- every venue rejection is logged with the authoritative error code and response body — transport status alone is unattributable;
+- rate-limit budgets reflect endpoint weights in one shared, weighted pool per enforcement boundary — reference platforms converge on weighted rate pools owned by the exchange-client layer; per-call-site counters and per-instance backoff are the known failure shape;
+- on startup, live systems fetch existing open orders and positions from the venue before making any decision — reference implementations converge on startup reconciliation rather than assuming an empty world.
 
 A local abstraction must not claim guarantees stronger than the governing venue contract.
 
@@ -127,7 +129,8 @@ Exercise as applicable:
 - reconciliation discovers an external order/position absent locally;
 - a failed order attempt persists a failure/backoff record that gates re-evaluation — absence of an open order alone is never a re-place trigger, and all venue egress funnels through the single client owning the limit/backoff contract;
 - every position-conditional order re-confirms the venue position at submit time: if the position is gone, clear local state and abort;
-- a fast market gaps through a fixed target: verify the obligation already had a durable intent, and that an already-crossed exit abandons maker preference for deterministic reduce-only execution.
+- a fast market gaps through a fixed target: verify the obligation already had a durable intent, and that an already-crossed exit abandons maker preference for deterministic reduce-only execution;
+- an on-exchange protection order manually cancelled at the venue: the system detects its absence against venue truth and re-places it — protection presence is enforced, not assumed from the last local action (reference convergence).
 
 Core rule instantiated here: **unknown external side effect requires reconciliation before an unsafe retry**.
 
@@ -200,7 +203,12 @@ Compare semantics, not merely code reuse:
 - restart/reconciliation and missing-data behavior;
 - unknown config/enum values fail closed in **every** engine — silent fall-through to a default branch in one engine is a parity bug;
 - internally expanded representations (step counts, indices, expansion counters) are never used directly as semantic labels in gating, display, or exports;
-- adjudicating historical live results requires a time-segmented replay of then-effective config/release/state — a current-parameter rerun of history answers "what would today's strategy have done", not "why did live behave that way"; reports carry their provenance mode.
+- adjudicating historical live results requires a time-segmented replay of then-effective config/release/state — a current-parameter rerun of history answers "what would today's strategy have done", not "why did live behave that way"; reports carry their provenance mode;
+- the backtest **declares its intra-bar ordering assumption explicitly**; the conservative default is stop-loss before favorable extremes within the same bar. An undeclared assumption is a finding, not a detail (reference convergence on declared conservative ordering);
+- backtest and live share one execution interpreter where feasible — reference platforms converge on a shared kernel (event ordering, time handling, execution flow) precisely to eliminate the interpreter-drift failure class; dual research/live engines require an explicit parity contract with shared fixtures;
+- live orders are asynchronous while backtest orders complete synchronously — verify code shared between both modes does not assume synchronous fills;
+- identical limit orders fill differently in live by queue position — live-vs-backtest comparisons must attribute divergence to fill assumptions, not only to signals;
+- composition tests run against a deterministic simulated venue (injectable clock and network, adversarial fills/cancels/rejects) rather than hand-written fakes; leading practice is continuous randomized testing against the deterministic simulator — unit-green components have repeatedly failed at first real composition.
 
 A backtest can be internally correct yet business-invalid if it assumes information or executions unavailable live.
 
@@ -231,6 +239,17 @@ Additionally:
 - emergency protection installation first proves insufficient fresh coverage across **all** system stops (not only its own client-order namespace);
 - protection validation checks trigger/anchor semantics, not only quantity coverage — an earlier-triggered or over-covering stop is a semantic failure, not a pass;
 - an authorized reduce-only de-risk path cannot be blocked by pending strategy obligations or readiness gates: safety gates must distinguish "forbidden to add risk" from "forbidden to reduce risk".
+
+## Pre-Trade Controls & Kill Functionality
+
+Control categories distilled from regulated-market requirements for algorithmic trading (EU RTS 6, US Market Access Rule). The categories are domain truth; the legal obligation is jurisdiction- and role-dependent — most retail/deployments are not bound, but every category below has prevented real loss somewhere and earns its place as a review target:
+
+- an **independent pre-trade guard layer** stands between strategy output and the venue, not bypassable by strategy code and not removable through strategy configuration; reference implementations converge on placing it in the execution-client/risk engine, not in the strategy;
+- numeric guardrails verify: price collars (max distance from a reference price), maximum order value/volume, and maximum order/message rate per venue enforcement boundary;
+- duplicate and fat-finger prevention at the gate: resubmission of the same identifier/quantity/symbol is blocked, and prices/sizes outside declared bounds are rejected before the venue sees them;
+- **kill functionality**: a single operator action cancels all open orders (and optionally flattens), is reachable in degraded states, and whose authority is independent of the strategy process — verify it is exercised in tests, not merely present;
+- guard configuration changes require authority separate from strategy deployment (the risk layer holds exclusive control of its own controls);
+- protections are periodically exercised against stressed shapes — gaps, one-sided books, repeated rejections — not only normal conditions.
 
 ## Notification & Alerting Semantics
 

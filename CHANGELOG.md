@@ -8,6 +8,22 @@ Domain Pack 独立版本化；例如 Trading Pack 的版本记录在 `domains/tr
 
 > 说明：下面的早期版本根据仓库实际演进整理。当前仓库尚不要求每个版本都必须已有 Git tag 或 GitHub Release；后续正式发布时可以让 tag/release 与 `VERSION` 对齐。
 
+## [trading-pack v4] - 2026-09-02
+
+Domain Pack 独立版本化，本条目不影响 Core `0.7.0`。来源：市场监管框架（EU RTS 6、US SEC 15c3-5）与成熟开源参考实现（NautilusTrader / Hummingbot / Freqtrade / QuantConnect Lean / Jane Street 确定性仿真实践）的调研蒸馏。
+
+### Added
+
+- **新增 "Pre-Trade Controls & Kill Functionality" 一节**（监管蒸馏，控制类别非法条）：独立于策略代码的 pre-trade 护栏层、数值护栏（价格护圈/最大订单量值/每执行边界消息速率上限）、重复单与胖手指在入场前拦截、kill functionality（单操作撤全部挂单、降级态可达、独立于策略进程、须被测试而非仅存在）、护栏配置与策略部署分权、保护机制定期在压力形态下演练；明确标注"控制类别是领域真理，合规义务因辖区而异"。
+- Backtest/Live Parity +5 条（参考实现收敛证据）：回测必须显式声明 bar 内排序假设（保守默认止损优先）、回测/实盘共享单一执行解释器（双引擎需显式 parity 契约 + 共享 fixtures）、实盘异步 vs 回测同步订单、同限价单因排队位置 fill 不同（分歧归因纪律）、组合测试运行在确定性模拟 venue 上（可注入时钟/网络 + 对抗性成交，持续随机化测试）。
+- External Semantics +2：限频预算按 endpoint 权重共享单一加权池（参考收敛；按调用点计数/按实例退避是已知失败形态）、启动时先拉取 venue 已有挂单与仓位再做任何决策。
+- Order/Execution Sweep +1：交易所侧保护单被手工撤销时系统须对照 venue 真实性检测缺席并重挂（保护在场性 enforced）。
+
+### Changed
+
+- 包头来源声明扩为三类（事故复盘 / 监管控制类别 / 参考实现收敛），"经验非定律"框定不变。
+- `domains/_CONTRACT.md` 新增 **"Distilling pack content"** 一节：三条蒸馏管线（事故复盘→不变量、监管框架→控制类别、参考实现→收敛证据）+ 共同策展门五条（换系统通用性检验 / 去源系统口音 / 经验非定律 / 按 contract 归类 / 代价证据三选一：事故、监管强制、独立参考收敛）。供所有未来 pack 复用。
+
 ## [trading-pack v3] - 2026-09-02
 
 Domain Pack 独立版本化，本条目不影响 Core `0.7.0`。
