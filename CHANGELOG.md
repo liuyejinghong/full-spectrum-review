@@ -8,6 +8,18 @@ Domain Pack 独立版本化；例如 Trading Pack 的版本记录在 `domains/tr
 
 > 说明：下面的早期版本根据仓库实际演进整理。当前仓库尚不要求每个版本都必须已有 Git tag 或 GitHub Release；后续正式发布时可以让 tag/release 与 `VERSION` 对齐。
 
+## [0.5.0] - 2026-09-02
+
+外部复审（issues #1–#5）修正：
+
+### Changed
+
+- Core workflow 顺序修正（#1）：Select Domain Packs 提前到 First Principles 之前——领域 invariants / external semantics 是最小充分机制推导的输入，先推导后加载会把 essential domain complexity 误判为 accidental complexity；single-unit 与 multi-unit 模式的领域知识加载顺序就此一致，FP 步骤明确把 pack 语义作为约束输入。
+- exclusive territory 改为 **primary ownership**（#2）：每个模块仍只有一个 primary owner 负责完整 local review，禁止同问题、同深度的重复审查；但允许其他单元带着明确声明的横切问题（ownership/source-of-truth 边界、端到端 invariant、domain lifecycle、跨模块资源路径）复查同一代码——distinct-question verification 不算重复，undifferentiated rescanning 才算。
+- 串行回退的 packet 从"落盘"改为 harness-neutral 的 **recoverable coordination artifact**（#3）：真正的 invariant 是 packet / brief 在上下文压缩后可恢复，filesystem 只是实现之一（session scratch、harness artifact store 均可）；harness 无任何可恢复机制时诚实降级——记录 compaction risk、收窄审计波次或如实标注覆盖/结论限制，不假装等价执行。
+- description 正向触发条件与正文对齐（#4）：去掉 "persisted findings" 前置（那是交付能力不是触发条件），改为"点名本 skill 或明确要求 comprehensive 审计"即触发；负面触发（ordinary / quick / diff-only review 不自动加载）保持不变。
+- README 中英的 Coverage Ledger 表述区分 Depth（deep / sampled / none）与 Status（COMPLETE / PARTIAL / NOT_COVERED / INSUFFICIENT_EVIDENCE）两个维度（#5），与 `reporting-protocol.md` 权威定义一致。
+
 ## [0.4.0] - 2026-09-02
 
 ### Added

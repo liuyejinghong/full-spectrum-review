@@ -2,7 +2,7 @@
 
 > A comprehensive software-audit Skill for AI coding agents: reconstruct what problem the system is actually solving, then judge engineering correctness, business truth, reliability, and cost in one pass — and persist the conclusions as a re-reviewable audit asset, not a read-once review comment.
 
-**Current Core version: `v0.4.0`** · [CHANGELOG](CHANGELOG.md) · [简体中文](README.md) · **English**
+**Current Core version: `v0.5.0`** · [CHANGELOG](CHANGELOG.md) · [简体中文](README.md) · **English**
 
 ## What ordinary AI review misses
 
@@ -24,7 +24,7 @@ Before judging any important design, the reviewer independently derives the requ
 
 ### 2. No findings ≠ not reviewed
 
-The report's Coverage Ledger records the actually-achieved depth per area: deep / sampled / not covered / insufficient evidence. A "all clear" report with vague coverage is less trustworthy than a report that says "I could not responsibly conclude on these two areas." "Full" means every materially relevant boundary and flow enters the plan and gets an honest coverage status — not that every file is read at identical depth.
+The report's Coverage Ledger states two dimensions per area: the depth actually achieved (deep / sampled / none) and the conclusion status (COMPLETE / PARTIAL / NOT_COVERED / INSUFFICIENT_EVIDENCE). A "all clear" report with vague coverage is less trustworthy than a report that says "I could not responsibly conclude on these two areas." "Full" means every materially relevant boundary and flow enters the plan and gets an honest coverage status — not that every file is read at identical depth.
 
 ### 3. Audit "should it exist" separately from "is it expensive"
 
@@ -79,7 +79,7 @@ The key trade-offs:
 - **Decompose by subsystem, not by "engineering / business / optimization"** — the latter forces every agent to re-read the whole repository. Each unit runs all lenses and domain packs inside its scope; ownership and end-to-end business chains get a few cross-cutting units.
 - **Share facts, not tentative conclusions** — prevents workers from anchoring each other and from re-deriving the same model.
 - **Workers have candidate authority only** — canonical IDs, final priorities, blocking flags, and terminal verdicts are decided centrally by the Lead. A parallel audit never becomes "eight reports stapled together".
-- **Context is saved by method, never by word caps** — duplicate reading is eliminated structurally: each module is audited by exactly one unit, cross-boundary code is read-only, and the brief carries only facts that change what some unit inspects or how it reads what it sees. No size budgets anywhere: an admitted fact is never cut for length, and a packet keeps every candidate's evidence intact (any candidate the packet omits is lost with the worker's context) — what gets excluded is process narrative only; a follow-up unit must first name the still-open question it will settle.
+- **Context is saved by method, never by word caps** — duplicate reading is eliminated structurally: each module has exactly one primary owner for its full local review, and other units may re-examine shared code only under a declared cross-cutting question (ownership boundary, end-to-end invariant, resource path) — never the same question at the same depth. The brief carries only facts that change what some unit inspects or how it reads what it sees. No size budgets anywhere: an admitted fact is never cut for length, and a packet keeps every candidate's evidence intact (any candidate the packet omits is lost with the worker's context) — what gets excluded is process narrative only; a follow-up unit must first name the still-open question it will settle.
 - **Domain knowledge is pluggable** — Domain Packs own "the real rules in this domain that cannot be derived from source"; core owns "how to audit". The bundled trading pack covers candle timing semantics, UNKNOWN order outcomes, reconciliation, precision, rate limits, multi-instance ownership, ...; adding payments / accounting packs requires no SKILL.md change.
 
 The final deliverable is one report: metadata and exact revision, coverage ledger, executive summary, findings ranked by priority, recommended execution order, open questions for the maintainer, Keep-As-Is, and evidence gaps — compact for a narrow PR, extensive for a repository-wide audit.
@@ -160,7 +160,7 @@ full-spectrum-review/
 
 ## Versioning and packs
 
-[`VERSION`](VERSION) is the single source of the current Core version (pre-1.0 SemVer; policy at the top of [CHANGELOG](CHANGELOG.md)). Domain Packs version independently — Core `0.4.0` can ship alongside Trading Pack `v2`, and an audit report records both.
+[`VERSION`](VERSION) is the single source of the current Core version (pre-1.0 SemVer; policy at the top of [CHANGELOG](CHANGELOG.md)). Domain Packs version independently — Core `0.5.0` can ship alongside Trading Pack `v2`, and an audit report records both.
 
 ## References
 

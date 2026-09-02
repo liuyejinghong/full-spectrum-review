@@ -79,9 +79,11 @@ After or alongside subsystem review, create cross-cutting units only where they 
 
 These units should inspect cross-boundary contracts rather than duplicate every subsystem review.
 
-### Exclusive territory
+### Primary ownership
 
-Assign every planned module/file area to exactly one unit. A unit tracing behavior across its boundary may read shared code, but only the owning unit audits it; the visitor records a cross-boundary concern in its packet instead of re-reviewing. Territory assignment prevents two units from silently re-reading and re-auditing the same files — a decomposition failure that otherwise surfaces only after the context has already been spent.
+Assign every planned module/file area exactly one **primary owner** unit, responsible for its complete local review, and record the assignment in the audit plan. No other unit repeats that same local review at the same depth.
+
+A different unit may re-examine the same code only under a declared cross-cutting question the primary owner's local review does not answer — an ownership/source-of-truth boundary, an end-to-end business invariant, a domain lifecycle, a cross-module resource path. Distinct-question verification is not duplication; undifferentiated rescanning is. The goal is unchanged: no two units spend context answering the same question about the same code.
 
 ## Lead / Coordinator responsibilities
 
@@ -292,10 +294,12 @@ When isolated workers are unavailable, the Lead executes the same Audit Units on
 After each unit:
 
 1. produce the same Reviewer Packet;
-2. write the packet to a durable session-scratch location outside the audited repository, and keep the Shared Audit Brief equally recoverable — the packet on disk, not memory, is what survives context compaction;
+2. record the packet as a **recoverable coordination artifact** — session scratch on disk, a harness artifact store, or any mechanism the Lead can re-read after context compaction — and keep the Shared Audit Brief equally recoverable; the artifact, not memory, is what survives compaction;
 3. allow local implementation detail to leave active context when no longer needed;
 4. proceed to the next unit;
-5. perform the same Phase 2 verification and Phase 3 synthesis, reloading packets from disk.
+5. perform the same Phase 2 verification and Phase 3 synthesis, recovering packets from that artifact.
+
+If the harness offers no recoverable state at all, say so and degrade honestly: record the compaction risk, shrink the audit wave so packets stay within survivable context, or mark the affected coverage and terminal outcome limits — rather than pretending sequential execution was equivalent.
 
 Sequential fallback is not a lower-standard audit. It is the same logical protocol with less execution concurrency.
 
