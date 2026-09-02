@@ -1,8 +1,8 @@
 # Full-Spectrum Review
 
-> A model-neutral Agent Skill for **comprehensive software audits**: reconstruct the problem from first principles, audit engineering/business correctness and justified runtime cost, apply relevant Domain Packs, and persist verified findings as a prioritized re-reviewable audit record.
+> A model-neutral Agent Skill for **comprehensive software audits**: reconstruct the problem from first principles, audit engineering/business correctness and justified runtime cost, apply relevant Domain Packs, scale large reviews through bounded Audit Units, and persist verified findings as a prioritized re-reviewable audit record.
 
-[简体中文](README.md) · **English**
+**Current Core version: `v0.3.0`** · [CHANGELOG](CHANGELOG.md) · [简体中文](README.md) · **English**
 
 ## What it does
 
@@ -11,15 +11,50 @@ A normal invocation means a **full audit of the requested target**. Full does no
 ```text
 exact target / revision
 → audit plan + coverage ledger
+→ bounded Audit Units when useful
 → system/domain/ownership/invariants
 → first-principles minimum sufficient mechanism
 → 0..N applicable Domain Packs
 → engineering + business + cost review
 → candidate findings + evidence + disconfirmation
-→ root-cause dedup + P0/P1/P2/P3
-→ recommended execution order
+→ cross-unit verification + root-cause dedup
+→ P0/P1/P2/P3 + recommended execution order
 → persistent report + stable finding ledger
 ```
+
+## Large repositories and limited context
+
+Full-Spectrum Review does **not** require a 1M-context model.
+
+Large targets can be decomposed into bounded **Audit Units**. If the current harness supports isolated workers/subagents and parallelism is useful, suitable units may run concurrently. If workers are unavailable, the exact same logical units run sequentially.
+
+```text
+                    Lead / Coordinator
+                           │
+                  Shared Audit Brief
+                           │
+        ┌──────────────────┼──────────────────┐
+        ▼                  ▼                  ▼
+   Execution Unit     Position Unit      Backtest Unit
+        │                  │                  │
+        └──────────────────┼──────────────────┘
+                           │
+                 Cross-boundary Verify
+                           │
+              Evidence + Root-cause Dedup
+                           │
+                    Canonical Report
+```
+
+Prefer subsystem/business-flow/external-boundary decomposition over creating one repository-wide Engineering worker, one Business worker, and one Optimization worker. Subsystem workers apply all relevant lenses and Domain Packs inside their scope; cross-cutting units inspect ownership, end-to-end business lifecycles, performance/resource behavior, or other boundaries that span modules.
+
+Workers receive a compact **Shared Audit Brief** containing the exact revision, system map, important authority/invariant facts, Business Authority Map, selected Domain Packs, prior findings/Keep-As-Is decisions, and their assigned scope.
+
+Workers return **Reviewer Packets** containing candidate findings and evidence. They do not allocate canonical `FSR-###` IDs or finalize priority, blocking, status, or terminal verdicts. The Lead/Coordinator centrally verifies, resolves contradictions, deduplicates root causes, reuses stable IDs, and produces the one canonical report.
+
+Parallel mode therefore does not mean concatenating several worker reports.
+
+See [`references/orchestration-protocol.md`](references/orchestration-protocol.md).
 
 ## First Principles: Necessity
 
@@ -68,6 +103,8 @@ Packs may add domain glossary, invariants, external semantics, scenarios, and se
 
 Core does not register packs one-by-one. Adding `domains/payments/DOMAIN.md` should not require editing `SKILL.md`.
 
+`domains/_CONTRACT.md` is an authoring contract; ordinary audits load only applicable `DOMAIN.md` packs.
+
 ### Trading pack
 
 [`domains/trading/DOMAIN.md`](domains/trading/DOMAIN.md) v2 covers market-data timing/look-ahead, backtest/live parity, signal/order/fill/position semantics, partial fills, unknown order outcomes, reconciliation, precision, accounting, protection, rate limits, time/signature windows, order flags/trigger sources, position/margin modes, instrument lifecycle, multi-instance account ownership, and credential permissions.
@@ -92,20 +129,50 @@ docs/reviews/
 
 The index is intentionally not an issue tracker.
 
-Coverage, re-review, Keep-As-Is persistence, and report structure are defined in [`references/reporting-protocol.md`](references/reporting-protocol.md). Canonical finding type/priority/confidence/status/schema are defined only in [`references/finding-protocol.md`](references/finding-protocol.md).
+Coverage, re-review, Keep-As-Is persistence, orchestration traceability, and report structure are defined in [`references/reporting-protocol.md`](references/reporting-protocol.md). Canonical finding type/priority/confidence/status/schema are defined only in [`references/finding-protocol.md`](references/finding-protocol.md).
+
+## Report traceability
+
+Persisted reports record, when available:
+
+- exact target revision/base/head;
+- Core Skill version and Skill revision;
+- execution mode (`single-unit`, `sequential-units`, or `parallel-units`);
+- loaded Domain Packs and their independent versions;
+- Coverage Ledger;
+- stable finding states and evidence.
+
+This makes it possible to tell whether a changed conclusion came from a changed target, changed audit protocol, changed Domain Pack knowledge, or newly available evidence.
 
 ## Read-only audit discipline
 
 Audit authorization is read-only for the audited implementation. Repository write permission authorizes audit artifacts only. Source/config/runtime fixes require a separate explicit follow-up authorization.
+
+## Versioning
+
+The Core Skill follows Semantic Versioning. [`VERSION`](VERSION) is the canonical current Core version and [`CHANGELOG.md`](CHANGELOG.md) records user-visible protocol changes.
+
+The project is still pre-1.0:
+
+- `MINOR` — new capabilities or material audit/report-contract changes; pre-1.0 incompatible protocol changes may also increment MINOR;
+- `PATCH` — corrections/clarifications that do not materially change the main audit contract;
+- `MAJOR` — reserved after 1.0 for incompatible core-protocol changes.
+
+Domain Packs version independently. Core `0.3.0` can therefore be used with Trading Pack `v2`, and a report records both.
+
+Git tags/releases may mirror `VERSION` when maintainers publish them, but runtime behavior does not depend on release infrastructure.
 
 ## Layout
 
 ```text
 full-spectrum-review/
 ├── SKILL.md
+├── VERSION
+├── CHANGELOG.md
 ├── README.md
 ├── README.en.md
 ├── references/
+│   ├── orchestration-protocol.md
 │   ├── first-principles-review.md
 │   ├── engineering-review.md
 │   ├── business-logic-review.md
@@ -119,7 +186,7 @@ full-spectrum-review/
         └── DOMAIN.md
 ```
 
-Progressive disclosure keeps the core Skill small while loading detailed/domain knowledge only when relevant.
+Progressive disclosure keeps the core Skill small while loading detailed/domain knowledge only when relevant. `CHANGELOG.md` and the Domain Pack authoring contract are not loaded during ordinary audits.
 
 ## Install
 
@@ -139,13 +206,15 @@ Common currently supported locations include:
 | Codex | `.codex/skills/` | `$CODEX_HOME/skills/` (commonly `~/.codex/skills/`) |
 | Claude Code | `.claude/skills/` | `~/.claude/skills/` |
 
-Discovery and activation behavior evolves; consult the current client documentation. The Skill itself does not require a particular subagent system, tool name, or GitHub API.
+Discovery and activation behavior evolves; consult current client documentation. The Skill itself does not require a particular subagent system, tool name, or GitHub API.
 
 ## Use
 
+Repository-wide audit:
+
 ```text
 Use full-spectrum-review to perform a comprehensive audit of this repository.
-Reconstruct important mechanisms from first principles, load all applicable Domain Packs, record honest coverage, verify/deduplicate/rank findings, and persist the canonical report plus audit ledger.
+Reconstruct important mechanisms from first principles, load all applicable Domain Packs, and — when the target is large and the harness supports workers/subagents — execute bounded Audit Units in parallel; otherwise use the same units sequentially. Record honest coverage, centrally verify/deduplicate/rank findings, and persist the canonical report plus audit ledger.
 ```
 
 For a PR:
@@ -154,6 +223,21 @@ For a PR:
 Use full-spectrum-review to comprehensively audit PR #123.
 Bind to the exact head, cover all materially affected paths, produce a compact canonical report, and request changes if blocking findings exist.
 ```
+
+## Design principles
+
+- Comprehensive audit is the default; narrow review is an explicit exception.
+- Comprehensive means provable coverage, not identical-depth scanning of every file.
+- Large targets decompose into bounded subsystem/flow Audit Units; parallelism is an optimization, not a protocol dependency.
+- Workers produce candidate evidence; the Lead owns canonical findings, stable IDs, root-cause deduplication, and verdicts.
+- Reconstruct the problem before accepting the current solution.
+- Separate Necessity from Cost.
+- Accidental-complexity claims require active disconfirmation.
+- Tests are evidence, not truth.
+- Changed lines are a starting point, not the reasoning boundary.
+- Severity and confidence are separate.
+- Domain knowledge is pluggable; core method does not grow one branch per domain.
+- Audits are read-only for the implementation by default.
 
 ## References
 
