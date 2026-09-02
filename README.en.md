@@ -1,18 +1,33 @@
 # Full-Spectrum Review
 
-> A comprehensive software-audit Skill for AI coding agents: reconstruct what problem the system is actually solving, then judge engineering correctness, business truth, reliability, and cost in one pass — and persist the conclusions as a re-reviewable audit asset, not a read-once review comment.
+> Ordinary review skills answer "is the code correct?". This one keeps asking: is the architecture right, is the business logic right, does this mechanism deserve to exist at all? A deep-audit Skill for AI coding agents — reconstruct the problem from first principles, judge engineering correctness, business truth, reliability, and cost across module boundaries, converge symptoms into evidence-verified root causes, and persist them as a re-reviewable audit asset.
 
 **Current Core version: `v0.6.0`** · [CHANGELOG](CHANGELOG.md) · [简体中文](README.md) · **English**
 
-## What ordinary AI review misses
+## Why this skill exists
 
-Ask an AI to review code and you usually get one of two things: a line-by-line bug hunt over the diff, or a long checklist ticked item by item. Neither answers the more important question:
+Before building `full-spectrum-review`, I worked my way through the review skills on the market. They shared one trait: they are engineering reviews — the lens is focused on code-level bugs: null derefs, boundary conditions, races, missed error handling. Those need catching. But a system's most expensive defects — the shape of the architecture, the truth of the business, the necessity of a mechanism — do not live in lines of code, and that lens cannot see them.
 
-**The code has no bugs and every test passes — but it is a perfect answer to the wrong question. Now what?**
+My first AI-written trading system was a few big monolithic files. It ran, tests were green, it traded. The cost showed up months later — signal computation and trade execution had grown into one body; every change rippled through everything; it could not be maintained. Line by line, that code was correct. What was wrong was its shape. An engineering review has nothing to say about it.
 
-The expensive defects in real projects are rarely a wrong line of code. They look like this: all that was needed was one authoritative piece of state, but the system grew a cache, a registry, a retry coordinator, a watchdog, a fallback reconciler, and a cleanup worker — six layers patching each other. Or the code faithfully implements a business rule that was misunderstood from day one.
+The second failure runs the other way. Some features, derived from first principles, need one straightforward implementation; the AI stacked fallback branches and defensive checks on top and rolled them into a state machine nobody could read. Not one layer of defense matched a failure mode that actually exists — every layer manufactured new state, new paths, a larger error surface. Nothing was missing. There was simply too much of it.
 
-`full-spectrum-review` exists for that layer of review: let a third-party agent that never worked on the project first understand the problem itself, then judge whether the system solves it correctly, necessarily, and sustainably.
+These two diseases, plus "code that faithfully implements a business rule that was wrong from day one", are where this skill started. What they share: **no bugs, all tests green — a perfect answer sitting on the wrong question.** The problem lives in module boundaries, state ownership, and whether a mechanism deserves to exist; you can only see it from the whole system. I looked for a review skill that audits that layer and found none, so I built `full-spectrum-review`: a third-party agent that never worked on the project first reconstructs the problem from first principles — what is actually required, which constraints are irreducible — then judges engineering correctness, business truth, reliability, and cost across module boundaries, converges scattered symptoms into evidence-verified root causes, and persists them as a re-reviewable audit asset.
+
+## How the three shapes differ
+
+The first two are the concrete shapes of the engineering reviews above:
+
+| | Line-by-line diff review | Checklist skills | full-spectrum-review |
+|---|---|---|---|
+| Core question | Any bugs in this change? | Every box ticked? | Is the system itself right? |
+| Field of view | The diff and nearby files | Each file on its own | The whole project, across modules and lifecycles |
+| Business truth | Code = correct by default | Code = correct by default | Business Authority Map first; code is one piece of evidence |
+| Over-complexity | Invisible — or flagged everywhere | Checked item by item, never questioned | Accusation requires a disconfirmation pass first |
+| The result | A comment thread you close | A ticked list | Stable IDs with lifecycle; re-reviews continue |
+| What was not reviewed | Not stated | Pretends full coverage | Coverage Ledger states it honestly |
+
+The six judgments below are where these differences become rules.
 
 ## Six core judgments
 
