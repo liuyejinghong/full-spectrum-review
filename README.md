@@ -1,8 +1,8 @@
 # Full-Spectrum Review
 
-> 面向 AI Coding Agent 的**全方位软件审计 Skill**：从第一性原理理解系统，再统一审查工程正确性、业务逻辑、架构、可靠性、性能与复杂度，并把结果沉淀为可复审、按优先级管理的审计资产。
+> 面向 AI Coding Agent 的**全方位软件审计 Skill**：从第一性原理理解系统，再统一审查工程正确性、业务逻辑、架构、可靠性、性能与复杂度；支持按上下文/Agent 能力拆分并发 Audit Units，并把结果沉淀为可复审、按优先级管理的审计资产。
 
-**简体中文** · [English](README.en.md)
+**当前 Core 版本：`v0.3.0`** · [CHANGELOG](CHANGELOG.md) · **简体中文** · [English](README.en.md)
 
 ## 它解决什么问题
 
@@ -15,6 +15,8 @@
         ↓
 建立 Audit Plan + Coverage Ledger
         ↓
+按系统边界拆分 Audit Units（需要时并发）
+        ↓
 理解系统 / 业务 / ownership / invariants
         ↓
 First Principles：什么是最小充分机制？
@@ -25,9 +27,9 @@ Engineering + Business + Cost Review
         ↓
 高召回候选 → 证据验证 → 反证调查
         ↓
-Root-cause dedup + P0/P1/P2/P3
+跨单元 verification + Root-cause dedup
         ↓
-Recommended Execution Order
+P0/P1/P2/P3 + Recommended Execution Order
         ↓
 持久化 Report + Stable Finding Ledger
 ```
@@ -47,6 +49,69 @@ Recommended Execution Order
 ```
 
 对于 PR，全面审查的是 PR 及其所有重要影响链路；对于 repository-wide audit，才覆盖整个系统的重要生产/业务路径。
+
+## 大仓库与有限上下文：可并发 Audit Orchestration
+
+`full-spectrum-review` **不要求模型拥有 1M context**。
+
+大型仓库可以被拆成多个有界 **Audit Units**。如果当前 harness 支持隔离 worker/subagent，可以并发执行；如果不支持，就按完全相同的 Audit Unit 边界串行执行。
+
+```text
+                    Lead / Coordinator
+                           │
+                  Shared Audit Brief
+                           │
+        ┌──────────────────┼──────────────────┐
+        ▼                  ▼                  ▼
+   Execution Unit     Position Unit      Backtest Unit
+        │                  │                  │
+        └──────────────────┼──────────────────┘
+                           │
+                 Cross-boundary Verify
+                           │
+              Evidence + Root-cause Dedup
+                           │
+                    Canonical Report
+```
+
+默认优先按**子系统 / 业务流 / 外部边界**拆，而不是简单拆成“Engineering Agent / Business Agent / Optimization Agent”。原因是后者往往要求每个 Agent 重复读取整个仓库。
+
+每个 subsystem worker 在自己的 scope 内执行完整的 Engineering / Business / First-Principles / Cost / Domain-Pack reasoning；跨系统的 ownership、端到端业务链、长期资源问题再由少量 cross-cutting Audit Units 复核。
+
+### Shared Audit Brief
+
+Lead 会给所有 Audit Units 一个紧凑的事实包，例如：
+
+- exact target / revision；
+- repository purpose / architecture map；
+- authoritative state / ownership；
+- critical invariants；
+- Business Authority Map；
+- Domain Packs + versions；
+- prior open findings / Keep-As-Is；
+- 当前 Audit Unit 的 scope。
+
+**共享事实，不提前共享 tentative findings**，尽量避免 worker 互相锚定。
+
+### Reviewer Packet
+
+worker/subagent 返回的是统一的候选证据包，而不是最终报告：
+
+```text
+Audit Unit / revision / coverage
+Inspected components / contracts
+Relevant invariants
+Candidate Findings + evidence
+Cross-boundary concerns
+Keep-As-Is candidates
+Evidence gaps
+```
+
+worker **不能**自行分配正式 `FSR-###`、最终 Priority、Blocking、Status 或 terminal verdict。最终证据核验、跨单元矛盾解析、root-cause dedup、stable ID 和 canonical report 只能由 Lead/Coordinator 统一完成。
+
+因此并发审计不会变成“把 8 份 worker 报告拼在一起”。
+
+权威规则见 [`references/orchestration-protocol.md`](references/orchestration-protocol.md)。
 
 ## 第一性原理：不把现有架构当成问题定义
 
@@ -154,6 +219,7 @@ Core 不硬编码 pack 名称。Reviewer 检查可用 `domains/`，根据 `appli
 
 ### Core 负责
 
+- Audit Orchestration；
 - First-Principles 方法；
 - finding 验证与反证门槛；
 - P0/P1/P2/P3 与 Confidence；
@@ -162,7 +228,7 @@ Core 不硬编码 pack 名称。Reviewer 检查可用 `domains/`，根据 `appli
 
 Pack 可以用领域语言**实例化** Core 原则，但不能复制一套自己的 finding bar 或 report schema。
 
-统一 contract 见 [`domains/_CONTRACT.md`](domains/_CONTRACT.md)。
+统一 contract 见 [`domains/_CONTRACT.md`](domains/_CONTRACT.md)。该文件是 pack authoring contract，普通 audit 不需要加载。
 
 ## Trading Domain Pack
 
@@ -223,8 +289,10 @@ docs/reviews/
 
 一次完整审计通常包括：
 
-- Audit Metadata / exact revision / Skill revision；
-- Loaded Domain Packs；
+- Audit Metadata / exact revision；
+- **Core Skill version + Skill revision**；
+- Execution Mode（single / sequential-units / parallel-units）；
+- Loaded Domain Packs + versions；
 - Coverage Ledger；
 - Executive Summary；
 - Priority Overview；
@@ -233,6 +301,8 @@ docs/reviews/
 - Open Questions for the Maintainer；
 - Positive Findings / Keep As-Is；
 - Evidence / Verification Gaps。
+
+多 Audit Unit 审计可以在 Appendix 留一个紧凑 orchestration summary，但不会把内部 worker transcript 全部塞进最终报告。
 
 Finding 的 canonical schema、Priority、Confidence、Status 只有一个权威来源：[`references/finding-protocol.md`](references/finding-protocol.md)。README 只做解释，不复制另一套规范。
 
@@ -244,16 +314,33 @@ Finding 的 canonical schema、Priority、Confidence、Status 只有一个权威
 
 这对生产系统、真实资金系统尤其重要。
 
+## 版本控制
+
+Core Skill 使用 Semantic Versioning，当前版本由根目录 [`VERSION`](VERSION) 唯一确定；用户可见协议变化记录在 [`CHANGELOG.md`](CHANGELOG.md)。
+
+当前仍处于 `0.x`：
+
+- `MINOR`：新增能力、重要 audit/report contract 变化；在 1.0 之前，不兼容协议调整也允许提升 MINOR；
+- `PATCH`：不改变主要审计 contract 的修正、澄清和小型兼容改进；
+- `MAJOR`：1.0 之后用于不兼容的核心协议变化。
+
+Domain Pack **独立版本化**。例如 Core 可以是 `0.3.0`，同时 Trading Pack 是 `v2`；审计报告会同时记录二者。
+
+Git tag / GitHub Release 后续正式发布时可以与 `VERSION` 对齐，但 Skill 的运行不依赖 release infrastructure。
+
 ## 目录
 
 ```text
 full-spectrum-review/
 ├── SKILL.md
+├── VERSION
+├── CHANGELOG.md
 ├── README.md
 ├── README.en.md
 ├── LICENSE
 ├── ACKNOWLEDGEMENTS.md
 ├── references/
+│   ├── orchestration-protocol.md
 │   ├── first-principles-review.md
 │   ├── engineering-review.md
 │   ├── business-logic-review.md
@@ -267,7 +354,7 @@ full-spectrum-review/
         └── DOMAIN.md
 ```
 
-`SKILL.md` 保持流程与 contract 精简；详细规则、示例和领域知识按需读取，避免固定巨型 Prompt 挤占源码上下文。
+`SKILL.md` 保持流程与 contract 精简；详细规则、示例和领域知识按需读取，避免固定巨型 Prompt 挤占源码上下文。`CHANGELOG.md` 和 `domains/_CONTRACT.md` 也不会在普通 audit 中无条件加载。
 
 ## 安装
 
@@ -297,7 +384,7 @@ Repository-wide audit：
 
 ```text
 使用 full-spectrum-review 对这个项目进行一次全面审计。
-理解业务和架构，从第一性原理重建关键机制，加载所有适用 Domain Packs，诚实记录 coverage，验证并按优先级排序 findings，最终沉淀 report + audit ledger。
+理解业务和架构，从第一性原理重建关键机制，加载所有适用 Domain Packs；如果目标较大且当前 harness 支持 worker/subagent，按 Audit Units 并发执行，否则同边界串行执行；诚实记录 coverage，统一验证/去重/排序 findings，最终沉淀 report + audit ledger。
 ```
 
 PR audit：
@@ -311,6 +398,9 @@ PR audit：
 
 - 全面审计是默认；专项审查是显式例外。
 - 全面意味着 coverage 可证明，不意味着每个文件同深度扫描。
+- 大型目标优先按 subsystem/flow 拆成有界 Audit Units；并发是能力优化，不是协议依赖。
+- 有 subagent 就并发，没有就同边界串行，最终报告 contract 不变。
+- worker 只产 candidate evidence；Lead 才拥有 final finding / stable ID / verdict authority。
 - 先重建问题，再接受现有解决方案。
 - Necessity 与 Cost 分离。
 - 找 accidental complexity 必须主动寻找反证。
