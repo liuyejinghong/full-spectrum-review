@@ -1,11 +1,13 @@
 ---
 name: full-spectrum-review
-description: Comprehensive evidence-driven software audit. Reconstructs requirements from first principles, audits engineering and business correctness plus operational and performance risk, applies relevant domain packs, and persists verified findings as a prioritized audit record.
+description: Comprehensive evidence-driven software audit. Reconstructs requirements from first principles, audits engineering and business correctness plus operational and performance risk, applies relevant domain packs, scales through model-neutral audit orchestration, and persists verified findings as a prioritized audit record.
 ---
 
 # Full-Spectrum Review
 
 Use this Skill for comprehensive repository, subsystem, PR, commit, production-readiness, or architecture audits.
+
+Current Skill version is recorded in `VERSION`. Record that version in persisted audit metadata when available. `CHANGELOG.md` is for maintainers and should not be loaded during ordinary audits unless version/history is relevant to the task.
 
 ## Default contract
 
@@ -26,20 +28,22 @@ Any implementation fix is a separate follow-up task requiring explicit user auth
 1. **Read prior audit state.** If the target repository already contains audit reports or an audit index, read them first so finding identity, status, prior Keep-As-Is decisions, and unresolved questions survive re-review.
 2. **Bind the target.** Record repository/target and exact revision when available. For PRs, record base and head.
 3. **Create an audit plan.** Identify important subsystems, execution paths, stateful components, external boundaries, business flows, and operational surfaces. Assign intended depth such as `deep`, `sampled`, or `not-covered`.
-4. **Reconstruct the system.** Read repository instructions, specifications, ADRs, architecture docs, Issues/PRs, configuration, tests, and relevant operational material. Reconstruct purpose, entities, ownership, authoritative state, lifecycles, and invariants.
-5. **Apply First Principles before accepting architecture.** For important or structurally non-trivial areas, derive the required outcome, irreducible constraints, invariants, and minimum sufficient mechanism before judging the current mechanism. Read `references/first-principles-review.md`.
-6. **Select Domain Packs.** Inspect available Domain Packs, load every applicable pack, and record which packs were used. Follow the Domain Pack rules below.
-7. **Run all applicable core lenses.** Read and apply the engineering, business, and optimization references. These are reasoning lenses, not separate final reports.
-8. **Generate candidates with high recall.** Follow behavior across changed and unchanged code where required to understand the target correctly.
-9. **Verify findings with high precision.** Apply `references/finding-protocol.md`, including disconfirmation for accidental-complexity claims.
-10. **Deduplicate by root cause and rank.** Preserve stable finding identity across re-reviews; do not renumber findings because priority changes.
-11. **Finalize coverage honestly.** Mark each planned area `complete`, `partial`, `not-covered`, or `insufficient-evidence` and state why.
-12. **Produce the canonical audit artifact.** Follow `references/reporting-protocol.md`; persist the report and audit index when writes are authorized.
+4. **Choose execution mode.** For large targets, use bounded Audit Units. If the current harness supports isolated workers/subagents and parallelism is materially useful, run suitable units concurrently; otherwise execute the same units sequentially. Follow `references/orchestration-protocol.md`.
+5. **Reconstruct the system.** Read repository instructions, specifications, ADRs, architecture docs, Issues/PRs, configuration, tests, and relevant operational material. Reconstruct purpose, entities, ownership, authoritative state, lifecycles, and invariants. In multi-worker mode, the Lead produces a compact Shared Audit Brief.
+6. **Apply First Principles before accepting architecture.** For important or structurally non-trivial areas, derive the required outcome, irreducible constraints, invariants, and minimum sufficient mechanism before judging the current mechanism. Read `references/first-principles-review.md`.
+7. **Select Domain Packs.** Inspect available Domain Packs, load every applicable pack, and record which packs were used. Follow the Domain Pack rules below.
+8. **Run all applicable core lenses.** Read and apply the engineering, business, and optimization references. These are reasoning lenses, not separate final reports. Subsystem Audit Units apply the relevant lenses within their own scope.
+9. **Generate candidates with high recall.** Follow behavior across changed and unchanged code where required to understand the target correctly. Worker outputs are candidate packets, not canonical findings.
+10. **Verify findings with high precision.** Apply `references/finding-protocol.md`, including disconfirmation for accidental-complexity claims. Resolve material cross-unit contradictions before final classification.
+11. **Deduplicate by root cause and rank.** The Lead preserves stable finding identity across re-reviews and centrally assigns final priority/status; workers must not allocate canonical IDs or terminal verdicts.
+12. **Finalize coverage honestly.** Mark each planned area `complete`, `partial`, `not-covered`, or `insufficient-evidence` and state why.
+13. **Produce the canonical audit artifact.** Follow `references/reporting-protocol.md`; persist the report and audit index when writes are authorized.
 
 ## Core references
 
 During a full audit, load the references needed for the target:
 
+- `references/orchestration-protocol.md` — model-neutral Audit Unit decomposition, optional parallel workers, Shared Audit Brief, Reviewer Packets, cross-boundary verification, sequential fallback.
 - `references/first-principles-review.md` — **Necessity**: what must exist, what is accidental complexity.
 - `references/engineering-review.md` — correctness, contracts, state, failure/recovery, concurrency, data, compatibility, tests, operations.
 - `references/business-logic-review.md` — domain truth, business rules, invariants, lifecycle, timing, economics, external reality.
@@ -47,7 +51,19 @@ During a full audit, load the references needed for the target:
 - `references/finding-protocol.md` — canonical finding types, priority, confidence, status, evidence bar, and schema.
 - `references/reporting-protocol.md` — coverage ledger, stable audit ledger, report structure, re-review, and persistence.
 
-Do not duplicate their normative definitions in ad-hoc output.
+For a small target that clearly does not benefit from decomposition, the orchestration reference may be skipped after the Lead determines that a single bounded audit unit is sufficient.
+
+Do not duplicate normative definitions from these references in ad-hoc output.
+
+## Audit orchestration boundary
+
+The Skill defines **logical Audit Units and packet contracts**, not a vendor-specific subagent API.
+
+Prefer subsystem/flow decomposition over splitting the whole repository into one Engineering worker, one Business worker, and one Optimization worker. Each subsystem worker should apply all relevant lenses and Domain Packs inside its scope; use separate cross-cutting units only for questions such as architecture/ownership, end-to-end business lifecycle, or long-running resource behavior.
+
+Workers share factual context but should keep first-pass candidate conclusions independent when practical. Workers may suggest candidate impact/confidence, but only the Lead/Coordinator may allocate/reuse `FSR-###` IDs, assign final priority/blocking/status, root-cause deduplicate, persist the canonical report, or issue a terminal verdict.
+
+If workers are unavailable, execute the same Audit Units sequentially and retain compact Reviewer Packets so context compression does not erase earlier evidence.
 
 ## Domain Pack contract
 
@@ -67,6 +83,8 @@ A Domain Pack must **not** redefine the core priority model, finding verificatio
 
 `domains/_CONTRACT.md` defines the authoring contract for creating/validating packs. **Do not load it during ordinary audits** unless pack structure itself is under review; load only the applicable `DOMAIN.md` files. Record loaded packs and versions in Audit Metadata.
 
+Domain Packs version independently from the core Skill. A report should record both the core Skill version and every loaded pack version when available.
+
 ## First-Principles boundary
 
 First Principles answers **"does this mechanism need to exist?"** It owns accidental complexity, duplicated ownership/state, unnecessary abstraction, unnecessary recovery layers, obsolete compatibility/configuration paths, and minimum-sufficient-mechanism reasoning.
@@ -85,6 +103,8 @@ When the platform exposes revisions, bind the audit to the exact reviewed revisi
 
 For a PR, re-read the current head immediately before a terminal verdict. A drifted head invalidates the old terminal verdict but does not invalidate already persisted historical evidence for the old revision.
 
+All Audit Units in one audit wave should inspect the same bound revision. Do not silently merge worker evidence from different heads.
+
 ## Anti-noise rules
 
 Do not publish:
@@ -102,9 +122,19 @@ Passing tests are evidence, not proof of correctness, business validity, or arch
 
 ## Required deliverable
 
-A full audit is incomplete until one coherent canonical report is produced. The report may be compact for a narrow PR and extensive for a repository-wide audit, but it must still record scope/coverage, exact revision when available, verified findings, priorities, and evidence.
+A full audit is incomplete until one coherent canonical report is produced. Parallel execution does not create multiple final reports. The report may be compact for a narrow PR and extensive for a repository-wide audit, but it must still record scope/coverage, exact revision when available, Skill/Domain Pack versions when available, verified findings, priorities, and evidence.
 
 If repository writes are available and the user authorized audit persistence, write only the audit artifacts defined by `references/reporting-protocol.md`. If writes are unavailable, return the complete artifact to the user unchanged.
+
+## Versioning
+
+The core Skill follows Semantic Versioning while pre-1.0 development remains explicitly experimental:
+
+- `MAJOR` — reserved for post-1.0 incompatible audit-contract changes;
+- `MINOR` — new capabilities or materially changed audit/report contracts; before 1.0, incompatible protocol changes may also increment MINOR;
+- `PATCH` — corrections/clarifications that do not materially change the audit contract.
+
+`VERSION` is the canonical current core version. `CHANGELOG.md` records user-visible protocol changes. Git tags/releases may mirror versions when maintainers choose to publish them, but ordinary audits must not depend on release infrastructure being present.
 
 ## Terminal result
 
