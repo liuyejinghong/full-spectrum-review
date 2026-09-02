@@ -1,108 +1,102 @@
 # Full-Spectrum Review
 
-> A model-neutral Agent Skill for **comprehensive software audits**: reconstruct requirements from first principles, then review engineering correctness, business logic, architecture, reliability, performance, and complexity, and consolidate verified findings into a prioritized persistent report.
+> A model-neutral Agent Skill for **comprehensive software audits**: reconstruct the problem from first principles, audit engineering/business correctness and justified runtime cost, apply relevant Domain Packs, and persist verified findings as a prioritized re-reviewable audit record.
 
 [简体中文](README.md) · **English**
 
 ## What it does
 
-A normal invocation means a **full audit**. The user does not need to manually select review modes.
-
-The Skill first asks what the system actually needs to accomplish and derives the **minimum sufficient mechanism** from real requirements, constraints, and invariants. Only then does it compare that model with the current implementation and continue through engineering, business, reliability, performance, and simplification lenses.
+A normal invocation means a **full audit of the requested target**. Full does not mean reading every file at identical depth; it means every materially relevant boundary/flow is represented in an Audit Plan and the final Coverage Ledger states what was deeply reviewed, sampled, not covered, or blocked by insufficient evidence.
 
 ```text
-understand real requirements + constraints
-        ↓
-first-principles minimum sufficient mechanism
-        ↓
-compare against current architecture / state / patch layers
-        ↓
-engineering + business + reliability + performance audit
-        ↓
-high-recall candidate generation
-        ↓
-evidence verification + root-cause deduplication
-        ↓
-P0 / P1 / P2 / P3 prioritization
-        ↓
-persistent full audit report
+exact target / revision
+→ audit plan + coverage ledger
+→ system/domain/ownership/invariants
+→ first-principles minimum sufficient mechanism
+→ 0..N applicable Domain Packs
+→ engineering + business + cost review
+→ candidate findings + evidence + disconfirmation
+→ root-cause dedup + P0/P1/P2/P3
+→ recommended execution order
+→ persistent report + stable finding ledger
 ```
 
-## First-principles review
+## First Principles: Necessity
 
-Before accepting an important subsystem's current design as necessary, the reviewer reconstructs:
-
-1. required externally meaningful outcome;
-2. irreducible business/external/concurrency/recovery/performance/compatibility constraints;
-3. invariants any valid implementation must preserve;
-4. the minimum sufficient conceptual mechanism.
-
-Then it challenges extra state, owners, workers, queues, caches, retries, fallbacks, watchdogs, wrappers, abstractions, compatibility layers, and configuration branches by asking which **current independent requirement** each one satisfies.
-
-If the same current requirements can be satisfied by a materially simpler mechanism, and the extra layers carry no independent requirement while increasing state space, synchronization, failure paths, operational burden, resource cost, or maintenance risk, the difference can be reported as an **Accidental Complexity** finding even when no current bug is reproduced.
-
-This is not code-golf minimalism. Real business, concurrency, failure, compatibility, and performance semantics may require substantial complexity. Simplification is valid only when all required responsibilities and invariants remain preserved.
-
-See [`references/first-principles-review.md`](references/first-principles-review.md).
-
-## Coverage
-
-As applicable, a full audit covers:
-
-- first-principles reconstruction and accidental complexity;
-- engineering correctness and contract propagation;
-- business rules, domain models, invariants, and lifecycles;
-- architecture, ownership, boundaries, and sources of truth;
-- failure, retry, restart, reconciliation, concurrency, and state consistency;
-- data integrity, compatibility, configuration, migration, and external semantics;
-- CPU, memory, I/O, networking, algorithmic cost, and long-running stability;
-- redundancy, duplicated state, over-engineering, dead code, dependency/configuration bloat;
-- tests, observability, deployment, rollback, and operability;
-- security where real trust boundaries exist;
-- optional domain packs.
-
-The final result is **one coherent audit**, not separate mini-reviews.
-
-## Canonical deliverable
-
-A complete audit produces a reusable Markdown report containing audit metadata, executive summary, priority overview, recommended remediation order, detailed P0/P1/P2/P3 findings, important keep-as-is strengths, verification gaps, and evidence.
-
-Supported finding classes include defects, business-semantic issues, reliability problems, performance problems, optimization opportunities, maintainability/security/test gaps, and **Accidental Complexity**.
-
-For accidental-complexity findings, the report should show:
+Before accepting a materially important architecture, the reviewer reconstructs:
 
 ```text
-Required outcome
-Irreducible constraints / invariants
-Minimum sufficient mechanism
-Current mechanism
-Accidental complexity delta
-Simplification direction
-Behavior-preservation plan
+Required Outcome
++ Irreducible Constraints
++ Required Invariants
+→ Minimum Sufficient Mechanism
 ```
 
-When repository writes are available and authorized, the report follows an existing project convention or defaults to:
+It then challenges whether additional state, ownership, workers, caches, abstractions, compatibility paths, recovery layers, and configuration branches carry independent current requirements.
+
+An `Accidental Complexity` finding does not require a reproduced bug, but it requires an explicit **disconfirmation attempt**: investigate why the challenged layer exists using available history, tests, ADRs, callers, operators, or external contracts. No meaningful contrary-evidence search means observation/hypothesis, not a publishable finding.
+
+Authoritative rules: [`references/first-principles-review.md`](references/first-principles-review.md) and [`references/finding-protocol.md`](references/finding-protocol.md).
+
+## Optimization: Cost
+
+The optimization lens is intentionally narrower:
+
+> Given that a mechanism is justified, is its runtime/resource/operational/external-service cost reasonable?
+
+It covers algorithmic cost, CPU, memory, I/O, network, batching, contention, resource lifecycle, external-service cost, and long-running stability. "This subsystem should not exist" belongs to First Principles rather than a competing optimization rule.
+
+See [`references/optimization-review.md`](references/optimization-review.md).
+
+## Business authority
+
+Business review builds a target-specific **Business Authority Map** from the evidence actually governing the system: external contracts, specs/ADRs, user-facing commitments, tests, and implementation/operational evidence.
+
+There is no universal hard-coded ordering across every domain. When required intent cannot be established responsibly, the report records an **Open Question for the Maintainer** rather than manufacturing a business defect.
+
+## Domain Packs
+
+Core owns **how to audit**. Domain Packs own **domain facts a generic reviewer cannot reliably infer from source alone**.
 
 ```text
-docs/reviews/<YYYY-MM-DD>-full-spectrum-review.md
+Core Audit Method + 0..N Domain Packs
 ```
 
-For a PR:
+Packs live under `domains/<domain>/DOMAIN.md` and follow [`domains/_CONTRACT.md`](domains/_CONTRACT.md). Multiple packs may apply to one system.
+
+Packs may add domain glossary, invariants, external semantics, scenarios, and severity context. They may not redefine core priority/confidence/finding/reporting rules.
+
+Core does not register packs one-by-one. Adding `domains/payments/DOMAIN.md` should not require editing `SKILL.md`.
+
+### Trading pack
+
+[`domains/trading/DOMAIN.md`](domains/trading/DOMAIN.md) v2 covers market-data timing/look-ahead, backtest/live parity, signal/order/fill/position semantics, partial fills, unknown order outcomes, reconciliation, precision, accounting, protection, rate limits, time/signature windows, order flags/trigger sources, position/margin modes, instrument lifecycle, multi-instance account ownership, and credential permissions.
+
+It stays provider-neutral and tells the reviewer to verify the actual venue contract rather than treating one exchange's parameters as universal truth.
+
+## Persistent audit lifecycle
+
+Findings have stable repository-level IDs and statuses:
 
 ```text
-docs/reviews/pr-<number>-<short-head>-full-spectrum-review.md
+OPEN / FIXED / ACCEPTED / SUPERSEDED / REOPENED
 ```
 
-## Priority model
+Priority changes do not renumber findings. If the audited repository has no equivalent convention, the Skill uses a lightweight ledger:
 
-| Priority | Meaning |
-|---|---|
-| **P0 Critical** | Catastrophic loss/corruption, systemic compromise, unrecoverable production state |
-| **P1 High** | Realistic major correctness, business, state, recovery, security, performance, or production risk; severe accidental complexity may qualify when it materially obscures ownership/safety on a core path |
-| **P2 Medium** | Real defect, significant weakness, meaningful optimization, or material accidental complexity that increases failure/state/operational/maintenance cost |
-| **P3 Low** | Concrete non-blocking improvement with limited impact |
+```text
+docs/reviews/
+├── INDEX.md
+└── <audit reports>.md
+```
 
-The report also provides a **Recommended Execution Order** so root-cause and ownership corrections come before dependent symptom patches.
+The index is intentionally not an issue tracker.
+
+Coverage, re-review, Keep-As-Is persistence, and report structure are defined in [`references/reporting-protocol.md`](references/reporting-protocol.md). Canonical finding type/priority/confidence/status/schema are defined only in [`references/finding-protocol.md`](references/finding-protocol.md).
+
+## Read-only audit discipline
+
+Audit authorization is read-only for the audited implementation. Repository write permission authorizes audit artifacts only. Source/config/runtime fixes require a separate explicit follow-up authorization.
 
 ## Layout
 
@@ -111,47 +105,64 @@ full-spectrum-review/
 ├── SKILL.md
 ├── README.md
 ├── README.en.md
-├── LICENSE
-├── ACKNOWLEDGEMENTS.md
-└── references/
-    ├── first-principles-review.md
-    ├── engineering-review.md
-    ├── business-logic-review.md
-    ├── optimization-review.md
-    ├── finding-protocol.md
-    ├── reporting-protocol.md
-    └── trading-domain.md
+├── references/
+│   ├── first-principles-review.md
+│   ├── engineering-review.md
+│   ├── business-logic-review.md
+│   ├── optimization-review.md
+│   ├── finding-protocol.md
+│   ├── reporting-protocol.md
+│   └── example-finding.md
+└── domains/
+    ├── _CONTRACT.md
+    └── trading/
+        └── DOMAIN.md
 ```
+
+Progressive disclosure keeps the core Skill small while loading detailed/domain knowledge only when relevant.
 
 ## Install
 
-```bash
-# Claude Code — user scope
-git clone https://github.com/liuyejinghong/full-spectrum-review.git ~/.claude/skills/full-spectrum-review
+Prefer the vendor-neutral Agent Skills location when your client supports it:
 
-# Codex — user scope
-git clone https://github.com/liuyejinghong/full-spectrum-review.git ~/.codex/skills/full-spectrum-review
+```bash
+git clone https://github.com/liuyejinghong/full-spectrum-review.git .agents/skills/full-spectrum-review
 ```
 
-Common project-scoped locations include `.claude/skills/`, `.codex/skills/`, `.cursor/skills/`, `.gemini/skills/`, and `.github/skills/`.
+Common currently supported locations include:
+
+| Client | Project / workspace | User / global |
+|---|---|---|
+| Cursor | `.agents/skills/` or `.cursor/skills/` | `~/.agents/skills/` or `~/.cursor/skills/` |
+| Gemini CLI | `.agents/skills/` or `.gemini/skills/` | `~/.agents/skills/` or `~/.gemini/skills/` |
+| GitHub Copilot | `.agents/skills/`, `.github/skills/`, `.claude/skills/` | `~/.agents/skills/`, `~/.copilot/skills/` |
+| Codex | `.codex/skills/` | `$CODEX_HOME/skills/` (commonly `~/.codex/skills/`) |
+| Claude Code | `.claude/skills/` | `~/.claude/skills/` |
+
+Discovery and activation behavior evolves; consult the current client documentation. The Skill itself does not require a particular subagent system, tool name, or GitHub API.
 
 ## Use
 
 ```text
 Use full-spectrum-review to perform a comprehensive audit of this repository.
-Reconstruct important features from first principles instead of assuming the current architecture is necessary. Review engineering correctness, business logic, architecture, performance, reliability, and simplification opportunities. Verify and rank findings P0/P1/P2/P3, then persist the complete audit report in the repository.
+Reconstruct important mechanisms from first principles, load all applicable Domain Packs, record honest coverage, verify/deduplicate/rank findings, and persist the canonical report plus audit ledger.
 ```
 
 For a PR:
 
 ```text
 Use full-spectrum-review to comprehensively audit PR #123.
-Bind the audit to the exact head, challenge unnecessary complexity from first principles, inspect affected call chains and business behavior, rank all verified findings by priority, persist the canonical audit report, and request changes if blocking findings exist.
+Bind to the exact head, cover all materially affected paths, produce a compact canonical report, and request changes if blocking findings exist.
 ```
 
-## Domain packs
+## References
 
-`references/trading-domain.md` adds trading and real-money semantics such as market-data timing, look-ahead, backtest/live parity, order lifecycle, partial fills, unknown outcomes, position truth, reconciliation, precision, accounting, protection orders, and operator takeover.
+- Agent Skills open standard: https://agentskills.io/
+- Cursor Agent Skills: https://cursor.com/docs/skills
+- Gemini CLI Agent Skills: https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/skills.md
+- GitHub Copilot Agent Skills: https://docs.github.com/en/copilot/concepts/agents/about-agent-skills
+- OpenAI Codex skills: https://github.com/openai/codex/tree/main/.codex/skills
+- Claude Skills authoring guidance: https://docs.claude.com/en/docs/agents-and-tools/agent-skills/best-practices
 
 ## License
 
