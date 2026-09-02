@@ -1,28 +1,78 @@
 # Full-Spectrum Review
 
-> **English** · [简体中文](README.md)
+> A model-neutral Agent Skill for **comprehensive software audits**: engineering correctness, business logic, architecture, reliability, performance, and simplification are reviewed together and consolidated into a prioritized persistent report.
 
-A model-neutral, open Agent Skill for independent software review.
+[简体中文](README.md) · **English**
 
-Instead of giving one reviewer a giant checklist, Full-Spectrum Review separates review into three independent axes:
+## What it does
 
-| Axis | Core question |
+A normal invocation means a **full audit**. The user does not need to manually select Engineering, Business Logic, or Optimization modes.
+
+The Skill reconstructs the system and its important business behavior, exercises all applicable review lenses, verifies candidate findings, deduplicates root causes, ranks findings P0 → P1 → P2 → P3, and produces a canonical Markdown audit report.
+
+```text
+understand system + domain
+        ↓
+map architecture / state / critical flows
+        ↓
+engineering + business + optimization audit
+        ↓
+high-recall candidate generation
+        ↓
+evidence verification + root-cause deduplication
+        ↓
+P0 / P1 / P2 / P3 prioritization
+        ↓
+persistent full audit report
+```
+
+## Coverage
+
+As applicable, a full audit covers:
+
+- engineering correctness and contract propagation;
+- business rules, domain models, invariants, and lifecycles;
+- architecture, ownership, boundaries, and sources of truth;
+- failure, retry, restart, reconciliation, concurrency, and state consistency;
+- data integrity, compatibility, configuration, migration, and external semantics;
+- CPU, memory, I/O, networking, algorithmic cost, and long-running stability;
+- redundancy, duplicated state, over-engineering, dead code, dependency/configuration bloat;
+- tests, observability, deployment, rollback, and operability;
+- security where real trust boundaries exist;
+- optional domain packs.
+
+Engineering, Business Logic, and Optimization remain separate reasoning lenses internally to reduce blind spots. The final result is **one coherent audit**, not three disconnected reports.
+
+## Canonical deliverable
+
+A complete audit must produce a reusable Markdown report containing audit metadata, executive summary, priority overview, recommended remediation order, detailed P0/P1/P2/P3 findings, important keep-as-is strengths, verification gaps, and evidence.
+
+When repository writes are available and authorized, the report follows an existing project convention or defaults to:
+
+```text
+docs/reviews/<YYYY-MM-DD>-full-spectrum-review.md
+```
+
+For a PR:
+
+```text
+docs/reviews/pr-<number>-<short-head>-full-spectrum-review.md
+```
+
+Findings are sorted by impact, not by file order or discovery order.
+
+## Priority model
+
+| Priority | Meaning |
 |---|---|
-| **Engineering Review** | Is the implementation correct, reliable, safe, and well integrated? |
-| **Business Logic Audit** | Does the implemented behavior correctly represent the intended domain reality? |
-| **Optimization & Simplification Review** | Can the same required behavior be delivered with less code, state, cost, complexity, and failure surface? |
+| **P0 Critical** | Catastrophic loss/corruption, systemic compromise, unrecoverable production state |
+| **P1 High** | Realistic major correctness, business, state, recovery, security, performance, or production failure |
+| **P2 Medium** | Real defect, significant weakness, meaningful optimization, or moderate-impact stability/maintenance issue |
+| **P3 Low** | Concrete non-blocking improvement with limited impact |
 
-Candidate findings are generated independently, then verified through one evidence protocol and deduplicated by root cause.
+The report also provides a **Recommended Execution Order** so root-cause fixes come before dependent symptom patches.
 
-## Why three axes?
-
-Different reviewers should be allowed to disagree productively.
-
-An Engineering reviewer may suggest another guard. An Optimization reviewer should be free to ask whether that guard is compensating for duplicated state or confused ownership. A Business reviewer establishes the domain invariant that either design must preserve.
-
-Keeping the axes separate reduces anchoring and makes independent third-party review materially more independent.
-
-## Structure
+## Layout
 
 ```text
 full-spectrum-review/
@@ -36,16 +86,13 @@ full-spectrum-review/
     ├── business-logic-review.md
     ├── optimization-review.md
     ├── finding-protocol.md
+    ├── reporting-protocol.md
     └── trading-domain.md
 ```
 
-`SKILL.md` stays intentionally compact. Detailed review guidance lives under `references/` and is loaded only when the selected review axis needs it.
+The base Skill stays compact while detailed audit knowledge lives in `references/` and is loaded when applicable.
 
 ## Install
-
-This repository follows the open Agent Skills `SKILL.md` format. Clone or copy the repository as a skill directory for your client.
-
-Examples:
 
 ```bash
 # Claude Code — user scope
@@ -55,62 +102,25 @@ git clone https://github.com/liuyejinghong/full-spectrum-review.git ~/.claude/sk
 git clone https://github.com/liuyejinghong/full-spectrum-review.git ~/.codex/skills/full-spectrum-review
 ```
 
-Project-scoped locations vary by client. Common locations include `.claude/skills/`, `.codex/skills/`, `.cursor/skills/`, `.gemini/skills/`, and `.github/skills/`.
-
-If your client supports Agent Skills but uses a different discovery path, place this directory at that client's documented skill location.
+Common project-scoped locations include `.claude/skills/`, `.codex/skills/`, `.cursor/skills/`, `.gemini/skills/`, and `.github/skills/`.
 
 ## Use
 
-### Full review
-
 ```text
-Use the full-spectrum-review skill to review PR #123.
-Run Engineering, Business Logic, and Optimization/Simplification as independent passes, then verify and deduplicate findings. Bind the verdict to the exact PR head.
+Use full-spectrum-review to perform a comprehensive audit of this repository.
+Review engineering correctness, business logic, architecture, performance, reliability, and simplification opportunities. Verify and rank findings P0/P1/P2/P3, then persist the complete audit report in the repository.
 ```
 
-### Business-only audit
+For a PR:
 
 ```text
-Use full-spectrum-review in Business Logic mode.
-Reconstruct the domain rules and invariants before judging the implementation. Focus on business-semantic mismatches rather than code style.
+Use full-spectrum-review to comprehensively audit PR #123.
+Bind the audit to the exact head, inspect affected call chains and business behavior, rank all verified findings by priority, persist the canonical audit report, and request changes if blocking findings exist.
 ```
-
-### Optimization-only audit
-
-```text
-Use full-spectrum-review in Optimization & Simplification mode.
-Preserve required behavior. Prioritize deleting duplicated state, responsibility, recovery machinery, and redundant work over adding new abstractions or micro-optimizations.
-```
-
-### Real-money trading system
-
-```text
-Use full-spectrum-review with the trading-domain pack.
-Review the exact commit for engineering correctness, business semantics, and behavior-preserving simplification. Treat unknown exchange/order state as something that requires reconciliation rather than an implicit success/failure.
-```
-
-## Design principles
-
-- Specialized review passes beat one giant checklist.
-- Spec and domain reconstruction come before implementation judgment.
-- Candidate generation favors recall; durable findings require evidence.
-- Tests are evidence, not proof.
-- Changed lines are the starting point, not the reasoning boundary.
-- Reachable failures matter; merely constructible hypotheticals do not.
-- Optimization must preserve required behavior and account for transferred responsibilities.
-- Reducing state and ownership ambiguity can improve reliability more than adding guards.
-- PR verdicts should be exact-head-bound whenever the platform exposes the head SHA.
-- The number of comments is not a quality metric.
 
 ## Domain packs
 
-The core skill is domain-neutral. Optional reference packs can extend it without bloating the base prompt.
-
-The first included pack is:
-
-- `references/trading-domain.md` — market-data timing, backtest/live parity, order lifecycle, partial fills, unknown outcomes, reconciliation, position truth, precision, accounting, protection orders, and operator takeover.
-
-Additional domain packs can be added without changing the three-axis review model.
+`references/trading-domain.md` adds trading and real-money semantics such as market-data timing, look-ahead, backtest/live parity, order lifecycle, partial fills, unknown outcomes, position truth, reconciliation, precision, accounting, protection orders, and operator takeover.
 
 ## License
 

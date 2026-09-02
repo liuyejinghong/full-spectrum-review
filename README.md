@@ -1,28 +1,112 @@
 # Full-Spectrum Review
 
-> **简体中文** · [English](README.en.md)
+> 面向 AI Coding Agent 的**全方位代码库审计 Skill**：一次完成工程正确性、业务逻辑、架构、稳定性、性能与精简优化审查，并沉淀为按优先级排序的审计报告。
 
-一个**模型无关**的开源 Agent Skill，用于独立的软件工程审查。
+**简体中文** · [English](README.en.md)
 
-它不把所有审查要求塞进一份巨型 Prompt，而是拆成三个彼此独立的审查轴：
+## 它解决什么问题
 
-| 审查轴 | 核心问题 |
+普通 AI Code Review 往往有两个问题：要么只盯 diff 找 bug，要么拿着一张很长的 checklist 逐项打勾，最后产生大量零散评论，却没有告诉维护者**真正应该先解决什么**。
+
+`full-spectrum-review` 的目标不是制造更多 finding，而是完成一次真正可落地的综合审计：
+
+```text
+理解系统和业务
+      ↓
+建立架构 / 数据 / 状态 / 生命周期模型
+      ↓
+全面检查工程 + 业务 + 优化 + 生产稳定性
+      ↓
+高召回生成候选问题
+      ↓
+证据验证 + 根因去重
+      ↓
+统一 P0 / P1 / P2 / P3 排序
+      ↓
+生成并沉淀完整审计报告
+```
+
+## 默认会审什么
+
+正常调用这个 Skill 时，默认就是**全面审计**，不需要用户再选择模式。
+
+它会根据项目实际情况覆盖：
+
+- 工程正确性、调用链与契约传播；
+- 业务规则、Domain Model、业务 invariant 与生命周期；
+- 架构边界、ownership、source of truth、跨模块耦合；
+- timeout、retry、restart、reconciliation、并发与状态一致性；
+- 数据完整性、兼容性、配置、迁移与外部系统语义；
+- CPU、内存、I/O、网络、算法复杂度和长时间运行稳定性；
+- 冗余代码、重复状态、过度抽象、dead code、依赖与配置膨胀；
+- 测试质量、可观测性、部署、回滚与运维风险；
+- 存在真实 trust boundary 时的安全问题；
+- 对应 Domain Pack 中的领域特有风险。
+
+内部仍然使用 Engineering / Business Logic / Optimization 三种不同 reasoning lens，目的是减少思维盲区；**最终不会输出三份割裂报告，而会合并成一份按风险优先级排序的审计结论。**
+
+## 最终产物
+
+一次完整审计必须形成可长期保存的 Markdown 报告。
+
+默认结构大致为：
+
+```text
+Full-Spectrum Review Report
+├── 审计元数据 / exact revision
+├── Executive Summary
+├── P0/P1/P2/P3 总览
+├── 建议修复执行顺序
+├── P0 Critical Findings
+├── P1 High Findings
+├── P2 Medium Findings
+├── P3 Low Findings
+├── Positive Findings / Keep As-Is
+├── Test / Verification Gaps
+└── Evidence / Appendix
+```
+
+每个 finding 都包含：
+
+- 优先级；
+- 类型与影响区域；
+- 真实触发条件 / workload；
+- 代码或业务机制；
+- 实际影响；
+- 证据；
+- 最小修复或优化方向；
+- 修复后如何验证。
+
+如果 AI 对目标仓库有写权限并且用户授权写入，优先遵循项目已有审计文档规范；没有现成规范时默认沉淀到：
+
+```text
+docs/reviews/<YYYY-MM-DD>-full-spectrum-review.md
+```
+
+PR 审查则可使用：
+
+```text
+docs/reviews/pr-<number>-<short-head>-full-spectrum-review.md
+```
+
+这样审查结果不会只存在于一次聊天里，而会成为项目本身可以继续跟踪、复审和修复的工程资产。
+
+## 优先级
+
+| 优先级 | 含义 |
 |---|---|
-| **Engineering Review** | 实现本身是否正确、可靠、安全，并且和上下游正确集成？ |
-| **Business Logic Audit** | 系统实际执行的行为，是否真正符合业务/领域现实？ |
-| **Optimization & Simplification Review** | 在保持必要行为不变的前提下，能否用更少代码、状态、成本、复杂度和故障面完成同样目标？ |
+| **P0 Critical** | 灾难性资金/数据损失、系统性 compromise、不可恢复生产状态 |
+| **P1 High** | 现实条件下的重大 correctness、业务、状态、恢复、安全、性能或生产故障 |
+| **P2 Medium** | 真实 defect、重要弱点、显著优化机会或中等影响的稳定性/维护性问题 |
+| **P3 Low** | 具体但非阻塞的低影响改进 |
 
-三个方向先独立生成候选 finding，再通过统一的证据协议验证，并按根因去重。
+最终报告严格按照 **P0 → P1 → P2 → P3** 排序，而不是按照文件顺序或者 AI 发现问题的先后顺序。
 
-## 为什么拆成三个方向？
+另外还会给出一个**Recommended Execution Order**：如果先修一个根因就能让多个低层问题一起消失，会优先建议修根因，而不是让开发者逐条打补丁。
 
-不同 reviewer 应该被允许从不同角度得出相反建议。
+## 为什么不做成一份巨型 Prompt
 
-Engineering reviewer 可能认为“这里应该再加一个保护”；Optimization reviewer 应该可以反问：“这个保护是不是在补偿一个错误的 ownership 或重复状态模型？”；Business reviewer 则负责确定无论怎么实现，都必须保持哪些业务 invariant。
-
-这种结构比让所有模型吃同一张超长 checklist 更能保持第三方审查的独立性。
-
-## 目录
+核心 `SKILL.md` 只负责审计流程、范围纪律和最终交付要求；具体审查知识放在 `references/` 中按需读取：
 
 ```text
 full-spectrum-review/
@@ -36,16 +120,33 @@ full-spectrum-review/
     ├── business-logic-review.md
     ├── optimization-review.md
     ├── finding-protocol.md
+    ├── reporting-protocol.md
     └── trading-domain.md
 ```
 
-`SKILL.md` 故意保持精简；详细检查项放进 `references/`，只有对应审查轴需要时才加载，避免浪费上下文和稀释注意力。
+这样既能做到全面，又不会让一份十几 k token 的固定 Prompt 挤占代码上下文并稀释注意力。
+
+## Domain Pack
+
+核心 Skill 保持领域无关。
+
+当前包含 `references/trading-domain.md`，用于交易、量化和真实资金系统，额外检查：
+
+- 行情/K 线时间语义和未来函数；
+- backtest / simulation / live parity；
+- order lifecycle 与 partial fill；
+- UNKNOWN order outcome 和重复下单；
+- position truth 与 restart reconciliation；
+- tick / step / minimum notional / rounding；
+- PnL、fee、funding 与数量守恒；
+- 止损止盈等保护单；
+- 自动交易与人工接管之间的 ownership。
+
+后续可以继续增加支付、电商、账务、分布式系统、AI Agent 等 Domain Pack，而不需要改变核心审计流程。
 
 ## 安装
 
-本仓库遵循开放的 Agent Skills `SKILL.md` 格式。把整个仓库 clone/copy 到你的 AI 客户端 Skill 目录即可。
-
-例如：
+本仓库遵循 Agent Skills 的 `SKILL.md` 目录格式。把整个仓库 clone/copy 到对应客户端 Skill 目录即可。
 
 ```bash
 # Claude Code，用户级
@@ -55,7 +156,7 @@ git clone https://github.com/liuyejinghong/full-spectrum-review.git ~/.claude/sk
 git clone https://github.com/liuyejinghong/full-spectrum-review.git ~/.codex/skills/full-spectrum-review
 ```
 
-不同客户端的项目级目录可能不同，常见位置包括：
+常见项目级目录还包括：
 
 ```text
 .claude/skills/
@@ -65,60 +166,35 @@ git clone https://github.com/liuyejinghong/full-spectrum-review.git ~/.codex/ski
 .github/skills/
 ```
 
-如果你的 Agent 支持 Agent Skills 但使用其他发现路径，按该客户端文档把此目录放进去即可。
+## 使用方式
 
-## 使用示例
-
-### 全方位审查
+最简单的调用方式就是：
 
 ```text
-Use the full-spectrum-review skill to review PR #123.
-Run Engineering, Business Logic, and Optimization/Simplification as independent passes, then verify and deduplicate findings. Bind the verdict to the exact PR head.
+使用 full-spectrum-review 对这个项目进行一次全面审计。
+审查代码、业务逻辑、架构、性能、稳定性和可精简项；验证并按 P0/P1/P2/P3 排序，最终把完整报告沉淀到仓库。
 ```
 
-### 只审业务逻辑
+审 PR：
 
 ```text
-Use full-spectrum-review in Business Logic mode.
-Reconstruct the domain rules and invariants before judging the implementation. Focus on business-semantic mismatches rather than code style.
+使用 full-spectrum-review 全面审查 PR #123。
+绑定 exact head，全面检查受影响链路，最终按优先级生成并沉淀审查报告；存在 blocking finding 时给出 REQUEST_CHANGES。
 ```
 
-### 只做优化/精简审查
+不需要再分别要求“做工程审查”“做业务审查”“做优化审查”，除非你本来就只想审其中某一个方向。
 
-```text
-Use full-spectrum-review in Optimization & Simplification mode.
-Preserve required behavior. Prioritize deleting duplicated state, responsibility, recovery machinery, and redundant work over adding new abstractions or micro-optimizations.
-```
+## 设计原则
 
-### 真实资金交易系统
-
-```text
-Use full-spectrum-review with the trading-domain pack.
-Review the exact commit for engineering correctness, business semantics, and behavior-preserving simplification. Treat unknown exchange/order state as something that requires reconciliation rather than an implicit success/failure.
-```
-
-## 核心设计原则
-
-- 专项独立审查优于一份巨型 checklist。
-- 先还原 specification / domain，再判断代码。
-- 候选发现阶段追求高召回；真正发布 finding 时追求高证据门槛。
+- 全面审计是默认行为；专项审查是显式例外。
+- 先理解系统和业务，再判断实现。
+- 候选问题阶段追求高召回，正式 finding 追求高证据门槛。
 - 测试是证据，不是真理。
 - changed lines 是审查起点，不是 reasoning 边界。
-- 真实可达的失败场景值得审；仅理论上可构造的不算。
-- 优化必须保持业务行为，并解释被删除责任由谁承担。
-- 减少重复状态和 ownership 模糊，往往比继续加 guard 更能提高稳定性。
-- PR verdict 应尽可能绑定 exact head SHA。
-- finding 数量不是审查质量指标。
-
-## Domain Pack
-
-核心 Skill 保持领域无关。需要时再加载额外领域包。
-
-当前包含：
-
-- `references/trading-domain.md`：行情时间语义、未来函数、回测/模拟/实盘一致性、订单生命周期、部分成交、未知订单结果、幂等、仓位 truth、重启 reconciliation、精度、PnL/费用、保护单、人工接管等。
-
-后续可以继续增加支付、电商、金融账务、工作流等领域包，而不改变三轴 Review 架构。
+- finding 按根因去重，不按症状堆数量。
+- 优化不仅是“跑得快”，还包括减少状态、责任、抽象和失败路径。
+- 删除错误复杂度往往比增加 guard 更能提高长期稳定性。
+- 最终交付必须让维护者清楚知道：**先修什么、为什么、如何证明修好了。**
 
 ## License
 
