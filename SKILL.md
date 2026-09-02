@@ -1,6 +1,6 @@
 ---
 name: full-spectrum-review
-description: Comprehensive evidence-driven software audit. Reviews engineering correctness, business/domain logic, architecture, reliability, performance, simplification, maintainability, security, testing, and operations; then consolidates verified findings into a prioritized persistent audit report.
+description: Comprehensive evidence-driven software audit. Reconstructs requirements from first principles, then reviews engineering correctness, business/domain logic, architecture, reliability, performance, simplification, maintainability, security, testing, and operations; verified findings are consolidated into a prioritized persistent audit report.
 ---
 
 # Full-Spectrum Review
@@ -13,19 +13,21 @@ Use this Skill when the user asks for a comprehensive review, audit, health chec
 
 The audit must cover, as applicable to the target:
 
-1. engineering correctness and contract propagation;
-2. business/domain logic and invariants;
-3. architecture, ownership, boundaries, and sources of truth;
-4. failure handling, recovery, restart, idempotency, and concurrency;
-5. data integrity, compatibility, configuration, migration, and external-system semantics;
-6. performance, I/O, memory, resource use, scalability, and long-running stability;
-7. simplification, redundancy removal, dead code, over-engineering, and dependency/configuration bloat;
-8. tests, observability, operability, deployment, rollback, and maintenance risk;
-9. security and trust boundaries where real untrusted inputs or privileges exist;
-10. domain-specific risks from an applicable domain pack.
+1. first-principles reconstruction and accidental complexity;
+2. engineering correctness and contract propagation;
+3. business/domain logic and invariants;
+4. architecture, ownership, boundaries, and sources of truth;
+5. failure handling, recovery, restart, idempotency, and concurrency;
+6. data integrity, compatibility, configuration, migration, and external-system semantics;
+7. performance, I/O, memory, resource use, scalability, and long-running stability;
+8. simplification, redundancy removal, dead code, over-engineering, and dependency/configuration bloat;
+9. tests, observability, operability, deployment, rollback, and maintenance risk;
+10. security and trust boundaries where real untrusted inputs or privileges exist;
+11. domain-specific risks from an applicable domain pack.
 
 The files under `references/` are review lenses, not separate products. Load and use all relevant lenses during a full audit:
 
+- `references/first-principles-review.md`
 - `references/engineering-review.md`
 - `references/business-logic-review.md`
 - `references/optimization-review.md`
@@ -34,11 +36,33 @@ The files under `references/` are review lenses, not separate products. Load and
 
 For trading or real-money systems also read `references/trading-domain.md`.
 
+## First-principles rule
+
+Do not accept the current architecture as the definition of the problem.
+
+Before deeply evaluating an important subsystem's implementation, independently reconstruct:
+
+1. the required externally meaningful outcome;
+2. the real irreducible constraints;
+3. the invariants any valid implementation must preserve;
+4. the minimum sufficient conceptual mechanism.
+
+Then compare that model with the current implementation.
+
+Challenge every additional state, owner, worker, queue, cache, retry, fallback, watchdog, wrapper, abstraction, compatibility layer, and configuration branch by asking what **current independent requirement** it satisfies.
+
+If the same current requirements could be satisfied by a materially simpler mechanism, and the extra layers carry no independent requirement while adding state space, synchronization, recovery paths, operational burden, resource cost, or maintenance risk, treat that difference as candidate **accidental complexity** even if no current bug is reproduced.
+
+This is not a mandate for minimum line count. Real business, concurrency, failure, compatibility, and performance constraints may require substantial complexity. Do not remove a layer unless its responsibility is either unnecessary or safely transferred while all required behavior and invariants remain preserved.
+
+Read and follow `references/first-principles-review.md`.
+
 ## Audit objective
 
 The goal is not to produce many comments. The goal is to produce a **decision-useful, prioritized technical audit artifact** that tells maintainers:
 
 - what is actually wrong or materially weak;
+- where the design is more complex than the requirements justify;
 - why it matters;
 - what evidence proves it;
 - what should be fixed first;
@@ -53,13 +77,14 @@ Before judging implementation:
 1. identify the exact review target and available source revision;
 2. read repository instructions, README, architecture docs, specifications, Issues/PR descriptions, ADRs, configuration, and relevant operational docs;
 3. reconstruct the system's purpose, major flows, domain entities, ownership, authoritative state, and critical invariants;
-4. map the relevant architecture and execution/data paths;
-5. inspect the implementation and enough surrounding code to understand callers, callees, persistence, external APIs, configuration, tests, and failure boundaries;
-6. run all applicable audit lenses;
-7. generate candidate findings with high recall;
-8. verify every publishable finding using `references/finding-protocol.md`;
-9. deduplicate by root cause and rank by priority;
-10. produce and persist the audit report using `references/reporting-protocol.md`.
+4. perform first-principles reconstruction of important subsystems **before accepting their existing architecture as necessary**;
+5. map the actual architecture and execution/data paths, then compare them with the minimum sufficient mechanisms;
+6. inspect the implementation and enough surrounding code to understand callers, callees, persistence, external APIs, configuration, tests, and failure boundaries;
+7. run all remaining applicable audit lenses;
+8. generate candidate findings with high recall, including accidental-complexity candidates;
+9. verify every publishable finding using `references/finding-protocol.md`;
+10. deduplicate by root cause and rank by priority;
+11. produce and persist the audit report using `references/reporting-protocol.md`.
 
 ## Comprehensive scope
 
@@ -69,9 +94,11 @@ For a PR or commit audit, the change is the primary scope, but changed lines are
 
 ## Independence of reasoning
 
-Engineering, Business Logic, and Optimization/Simplification are distinct reasoning lenses. During candidate generation, avoid letting a tentative conclusion from one lens prematurely close another line of inquiry.
+First Principles, Engineering, Business Logic, and Optimization/Simplification are distinct reasoning lenses. During candidate generation, avoid letting a tentative conclusion from one lens prematurely close another line of inquiry.
 
-After candidate generation, combine all lenses into one root-cause-oriented result. The user should receive **one coherent audit**, not three disconnected mini-reviews.
+In particular, do not let the existence of passing tests or a bug-free implementation prove that the design itself is justified. A function can behave correctly while solving the problem through unnecessary machinery.
+
+After candidate generation, combine all lenses into one root-cause-oriented result. The user should receive **one coherent audit**, not disconnected mini-reviews.
 
 ## Exact-revision discipline
 
@@ -86,6 +113,7 @@ Recheck the current head immediately before a terminal PR verdict.
 Do not report:
 
 - style preferences without meaningful correctness, maintenance, or efficiency impact;
+- "over-engineered" judgments that cannot identify a simpler sufficient mechanism and preserved invariants;
 - hypothetical edge cases unreachable through supported behavior;
 - speculative security hardening without a real trust boundary or attack path;
 - micro-optimizations without a plausible meaningful workload;
@@ -120,11 +148,11 @@ The report must be sorted by priority, not by discovery order or file order. Rea
 Use:
 
 - `P0 — Critical`: catastrophic loss/corruption, systemic compromise, or unrecoverable production state.
-- `P1 — High`: realistic major correctness, business, state, recovery, security, performance, or production failure.
-- `P2 — Medium`: real defect, significant weakness, meaningful optimization, or maintainability/stability issue with moderate impact.
+- `P1 — High`: realistic major correctness, business, state, recovery, security, performance, or production failure; may also include accidental complexity that materially obscures ownership/safety in a core production path.
+- `P2 — Medium`: real defect, significant weakness, meaningful optimization, or material accidental complexity that increases state space, failure surface, operational burden, or maintenance risk.
 - `P3 — Low`: concrete non-blocking improvement with limited impact.
 
-Do not inflate priority. Optional cleanup should not become P0/P1 merely because it is aesthetically desirable.
+Do not inflate priority. Optional cleanup or aesthetic simplification should not become P0/P1/P2.
 
 ## Terminal result
 
@@ -138,4 +166,4 @@ For PR merge decisions, use one of:
 
 For repository-wide audits, give an overall health/risk assessment rather than forcing a merge verdict.
 
-The audit is successful when a maintainer can read the report from top to bottom and immediately know **what to fix first, why, and what evidence supports that priority**.
+The audit is successful when a maintainer can read the report from top to bottom and immediately know **what to fix first, why, what can be removed, and what evidence supports that priority**.
