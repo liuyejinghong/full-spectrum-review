@@ -6,7 +6,9 @@ A full-spectrum audit must end in one consolidated, persistent report. The repor
 
 **Sort by priority, then by root-cause importance.** Do not organize the main findings by file order, reviewer lens, or discovery sequence.
 
-Engineering, Business Logic, and Optimization are dimensions used to discover and classify findings. They are not separate final reports unless the user explicitly requests that format.
+First Principles, Engineering, Business Logic, and Optimization are dimensions used to discover and classify findings. They are not separate final reports unless the user explicitly requests that format.
+
+A correct-but-unnecessarily-complex design can be a real audit finding. Do not bury verified accidental complexity in an informal "nice to have" section merely because no current bug is reproduced.
 
 ## Recommended report structure
 
@@ -26,7 +28,7 @@ Engineering, Business Logic, and Optimization are dimensions used to discover an
 - Highest-risk themes
 - Whether production/merge should be blocked
 - Total findings by priority
-- Most important simplification/performance opportunities
+- Most important first-principles/simplification/performance opportunities
 
 ## 3. Priority Overview
 | Priority | Count | Meaning |
@@ -62,7 +64,7 @@ Engineering, Business Logic, and Optimization are dimensions used to discover an
 
 ## 11. Appendix
 - Commands/tests/benchmarks inspected or executed
-- Architecture/business-rule notes when useful
+- Architecture/business-rule/first-principles notes when useful
 ```
 
 Skip empty priority sections, but never hide the fact that no findings exist at a priority.
@@ -75,8 +77,8 @@ At the top of the report, include a compact table listing each finding in final 
 | ID | Priority | Type | Area | Finding | Impact |
 |---|---|---|---|---|---|
 | FSR-001 | P0 | Defect | Business / Trading | ... | ... |
-| FSR-002 | P1 | Defect | Reliability | ... | ... |
-| FSR-003 | P2 | Optimization | Architecture | ... | ... |
+| FSR-002 | P1 | Reliability | Execution | ... | ... |
+| FSR-003 | P2 | Accidental Complexity | Architecture | ... | ... |
 ```
 
 Use stable IDs (`FSR-001`, `FSR-002`, ...). IDs follow final priority order, not discovery order.
@@ -89,7 +91,8 @@ Use one of these when useful:
 - `Business` — domain/business semantics are wrong or incomplete;
 - `Reliability` — failure/recovery/concurrency/state behavior is unsafe;
 - `Performance` — real workload/resource inefficiency with meaningful impact;
-- `Optimization` — current behavior is correct but materially more complex/costly than necessary;
+- `Accidental Complexity` — current requirements can be satisfied by a materially simpler sufficient mechanism and the extra layers carry no independent current requirement while increasing state/failure/maintenance/operational cost;
+- `Optimization` — current behavior is correct but materially more costly than necessary;
 - `Maintainability` — concrete entropy or ownership problem likely to cause future defects;
 - `Security` — real trust-boundary or privilege defect;
 - `Test Gap` — important behavior is materially unproven.
@@ -98,12 +101,12 @@ A finding may include multiple area tags, but keep one primary type.
 
 ## Detailed finding format
 
-Each detailed finding should contain:
+Each detailed finding should normally contain:
 
 ```markdown
 ### FSR-00X — [P?] Short title
 
-**Type:** Defect / Business / Reliability / Performance / Optimization / ...
+**Type:** Defect / Business / Reliability / Performance / Accidental Complexity / Optimization / ...
 **Area:** module / business flow / subsystem
 **Evidence:** `path:line`, tests, contract, benchmark, external semantics
 
@@ -126,7 +129,32 @@ The smallest sensible correction or simplification direction. Do not write a ful
 What test, scenario, measurement, or invariant should prove the fix safe.
 ```
 
-For optimization findings, explicitly state how required responsibilities remain satisfied after simplification.
+For First-Principles / Accidental-Complexity findings, use the stronger shape below when it improves clarity:
+
+```markdown
+**Required outcome**
+What the subsystem actually must accomplish.
+
+**Irreducible constraints / invariants**
+What a valid solution cannot violate.
+
+**Minimum sufficient mechanism**
+The smallest conceptual mechanism that satisfies those requirements.
+
+**Current mechanism**
+The actual states, owners, workers, caches, retries, wrappers, or recovery layers.
+
+**Accidental complexity delta**
+Which extra layers do not carry an independent current requirement and what cost they create.
+
+**Simplification direction**
+What responsibility boundary/state model can be removed or consolidated.
+
+**Behavior-preservation plan**
+How to prove the simplified mechanism preserves all required semantics.
+```
+
+Do not use this type merely because code looks verbose. The report must demonstrate the simpler sufficient mechanism and preserved responsibilities.
 
 ## Recommended execution order
 
@@ -135,14 +163,14 @@ Priority alone is not always sufficient. Dependencies between fixes matter.
 After ranking findings, produce a recommended remediation sequence that considers:
 
 1. stop-the-bleeding production/real-money risk;
-2. root causes that invalidate other fixes;
+2. first-principles/root-cause corrections that invalidate multiple downstream patches;
 3. authoritative state/ownership corrections;
 4. correctness and recovery defects;
 5. performance/stability bottlenecks;
 6. simplification and entropy reduction;
 7. lower-impact cleanup.
 
-If one architectural correction makes several lower-priority findings disappear, say so explicitly rather than recommending five independent patches.
+If one ownership or architectural correction makes several lower-priority findings disappear, say so explicitly rather than recommending independent patches.
 
 ## Positive findings
 
@@ -175,8 +203,10 @@ If writes are not available, provide the report in full and state that persisten
 
 Before declaring the audit complete, verify:
 
-- all applicable review lenses were exercised;
+- first-principles reconstruction was performed for important subsystems rather than assuming the current architecture is necessary;
+- all other applicable review lenses were exercised;
 - high-risk architecture/business flows were traced end-to-end;
+- accidental-complexity findings demonstrate a simpler sufficient mechanism and preserved invariants;
 - findings were verified and deduplicated;
 - priority reflects impact rather than reviewer confidence;
 - findings are ordered P0 → P1 → P2 → P3;
