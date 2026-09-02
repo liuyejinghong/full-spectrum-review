@@ -2,7 +2,7 @@
 
 > A comprehensive software-audit Skill for AI coding agents: reconstruct what problem the system is actually solving, then judge engineering correctness, business truth, reliability, and cost in one pass — and persist the conclusions as a re-reviewable audit asset, not a read-once review comment.
 
-**Current Core version: `v0.5.0`** · [CHANGELOG](CHANGELOG.md) · [简体中文](README.md) · **English**
+**Current Core version: `v0.6.0`** · [CHANGELOG](CHANGELOG.md) · [简体中文](README.md) · **English**
 
 ## What ordinary AI review misses
 
@@ -160,7 +160,7 @@ full-spectrum-review/
 
 ## Versioning and packs
 
-[`VERSION`](VERSION) is the single source of the current Core version (pre-1.0 SemVer; policy at the top of [CHANGELOG](CHANGELOG.md)). Domain Packs version independently — Core `0.5.0` can ship alongside Trading Pack `v2`, and an audit report records both.
+[`VERSION`](VERSION) is the single source of the current Core version (pre-1.0 SemVer; policy at the top of [CHANGELOG](CHANGELOG.md)). Domain Packs version independently — Core `0.6.0` can ship alongside Trading Pack `v2`, and an audit report records both.
 
 ## References
 

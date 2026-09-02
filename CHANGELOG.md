@@ -8,6 +8,15 @@ Domain Pack 独立版本化；例如 Trading Pack 的版本记录在 `domains/tr
 
 > 说明：下面的早期版本根据仓库实际演进整理。当前仓库尚不要求每个版本都必须已有 Git tag 或 GitHub Release；后续正式发布时可以让 tag/release 与 `VERSION` 对齐。
 
+## [0.6.0] - 2026-09-02
+
+### Changed
+
+- Read-only 纪律语义澄清（`SKILL.md`）：只读约束的是**修改被审实现**，不是证据获取——运行被审仓库的测试、执行 benchmark/可复现实验（仓外沙箱或事后清理临时产物）、联网核实外部契约都是预期的证据工作，用尽 harness 与用户实际授予的一切能力。禁止自我加码（离线、只 read/grep、不跑测试）再当作纪律呈现："能跑测试却选择不跑的审计是在猜，不是在审"。环境真不具备的能力记为 evidence gap 并如实影响置信度。
+- `references/orchestration-protocol.md` 新增 **Worker capability floor**：Lead 不得对 worker 施加比 harness/用户授权更窄的能力限制；常设约束只有三条（对被审实现只读、candidate-only、exact-revision 绑定）；worker 预期以测试/benchmark/实验为证据；harness 自身缺乏能力时记录为证据缺口，不当作自己的选择。
+
+> 动因：v0.5.0 双路径试跑中 Lead 派工时自我施加了 no-network / read-grep-only 约束，导致部分 finding 只能静态推演并降档置信。限制应来自环境与用户授权，不应来自审计协议自身。
+
 ## [0.5.0] - 2026-09-02
 
 外部复审（issues #1–#5）修正：

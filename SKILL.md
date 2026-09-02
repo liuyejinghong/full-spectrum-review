@@ -21,6 +21,8 @@ For a PR or commit, the target is the change and all materially affected contrac
 
 The audited implementation is **read-only by default**. Repository write authorization permits writing audit artifacts only; it does not authorize modifying audited source code, configuration, migrations, runtime behavior, or business data.
 
+Read-only binds **modification of the audited implementation**, not evidence gathering. Running the target's tests, executing benchmarks or reproducible experiments (sandboxed outside the audited tree, or with ephemeral artifacts cleaned up), and verifying external contracts over the network are expected evidence work — use every capability the harness and the user actually grant. Never self-impose a narrower mode (offline, read/grep-only, no test execution) and present it as discipline: an audit that could have run the tests and chose not to is guessing, not reviewing. When the environment genuinely lacks a capability, record it as an evidence gap with its confidence impact.
+
 Any implementation fix is a separate follow-up task requiring explicit user authorization. Do not "fix while reviewing."
 
 ## Core workflow

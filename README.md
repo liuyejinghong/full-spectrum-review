@@ -2,7 +2,7 @@
 
 > 面向 AI Coding Agent 的全方位软件审计 Skill：先重建"这个系统到底在解决什么问题"，再统一审判工程正确性、业务真相、可靠性与成本，最后把结论沉淀成可复审的审计资产——而不是一份看完就丢的 review 意见。
 
-**当前 Core 版本：`v0.5.0`** · [CHANGELOG](CHANGELOG.md) · **简体中文** · [English](README.en.md)
+**当前 Core 版本：`v0.6.0`** · [CHANGELOG](CHANGELOG.md) · **简体中文** · [English](README.en.md)
 
 ## 普通 AI review 缺的那一块
 
@@ -157,7 +157,7 @@ full-spectrum-review/
 
 ## 版本与领域包
 
-[`VERSION`](VERSION) 唯一确定当前 Core 版本（pre-1.0 SemVer，政策见 [CHANGELOG](CHANGELOG.md) 开头）。Domain Pack 独立版本化——Core 可以是 `0.5.0`，同时 Trading Pack 是 `v2`，审计报告会同时记录二者。
+[`VERSION`](VERSION) 唯一确定当前 Core 版本（pre-1.0 SemVer，政策见 [CHANGELOG](CHANGELOG.md) 开头）。Domain Pack 独立版本化——Core 可以是 `0.6.0`，同时 Trading Pack 是 `v2`，审计报告会同时记录二者。
 
 ## 参考标准
 

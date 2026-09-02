@@ -205,6 +205,12 @@ A worker may suggest likely impact/severity to help synthesis, but the Lead owns
 
 This prevents several workers from publishing multiple symptoms of one root cause as separate canonical findings.
 
+## Worker capability floor
+
+The Lead must not impose constraints on workers narrower than what the harness and the user grant — for example, banning network access or forbidding test execution. The standing constraints are exactly three: read-only discipline toward the audited implementation, candidate-only authority, and exact-revision binding.
+
+Workers are expected to run the target's tests, benchmarks, and reproducible experiments as evidence, sandboxing side effects outside the audited tree or cleaning ephemeral artifacts. If the harness itself lacks a capability, record it as an evidence gap with its confidence impact — do not adopt the limitation as a chosen constraint.
+
 ## Multi-phase execution
 
 A robust large-repository audit normally follows four phases.
