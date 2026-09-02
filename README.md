@@ -1,174 +1,250 @@
 # Full-Spectrum Review
 
-> 面向 AI Coding Agent 的**全方位代码库审计 Skill**：从第一性原理重建需求，再统一审查工程正确性、业务逻辑、架构、稳定性、性能与复杂度，并沉淀为按优先级排序的审计报告。
+> 面向 AI Coding Agent 的**全方位软件审计 Skill**：从第一性原理理解系统，再统一审查工程正确性、业务逻辑、架构、可靠性、性能与复杂度，并把结果沉淀为可复审、按优先级管理的审计资产。
 
 **简体中文** · [English](README.en.md)
 
 ## 它解决什么问题
 
-普通 AI Code Review 往往有三个问题：
+普通 AI Code Review 往往只做两件事之一：盯 diff 找 bug，或者拿一张超长 checklist 逐项打勾。
 
-1. 只盯 diff 找 bug；
-2. 拿着一张很长的 checklist 逐项打勾；
-3. 默认接受现有架构，只检查“这套复杂实现有没有 bug”，却很少追问“这个功能本来是否根本不需要这么复杂”。
-
-`full-spectrum-review` 的目标不是制造更多 finding，而是完成一次真正可落地的综合审计：
+`full-spectrum-review` 的目标不同：让一个没有参与项目开发的第三方 Agent 先理解**问题本身**，再判断系统是不是以正确、必要且可持续的方式解决它。
 
 ```text
-理解真实需求 / 业务 / 外部约束
-      ↓
-第一性原理重建最小充分机制
-      ↓
-与现有架构 / 状态 / 补丁层比较
-      ↓
-全面检查工程 + 业务 + 稳定性 + 性能 + 复杂度
-      ↓
-高召回生成候选问题
-      ↓
-证据验证 + 根因去重
-      ↓
-统一 P0 / P1 / P2 / P3 排序
-      ↓
-生成并沉淀完整审计报告
-```
-
-## 第一性原理：先审“为什么需要这么复杂”
-
-这是全面审计里的强制阶段，不是普通 Optimization 的附属项。
-
-Reviewer 在深入接受现有实现前，要先独立回答：
-
-1. 这个功能真正必须完成什么结果？
-2. 哪些约束是业务、外部系统、并发、恢复、性能或兼容性带来的真实约束？
-3. 哪些 invariant 无论如何都必须保持？
-4. 满足这些要求的**最小充分机制**是什么？
-5. 现有实现额外增加了哪些 state、owner、worker、queue、cache、retry、fallback、watchdog、wrapper、状态机或配置分支？
-6. 每一层额外复杂度到底承载哪个当前仍然存在的独立 requirement？
-7. 如果今天从零实现同样的当前需求，还会选择这套设计吗？
-
-比较方式是：
-
-```text
-Required outcome
-+ Irreducible constraints
-+ Required invariants
+锁定 exact target / revision
         ↓
-Minimum sufficient mechanism
-        VS
-Current implementation
+建立 Audit Plan + Coverage Ledger
         ↓
-Accidental complexity delta
+理解系统 / 业务 / ownership / invariants
+        ↓
+First Principles：什么是最小充分机制？
+        ↓
+加载 0..N 个适用 Domain Packs
+        ↓
+Engineering + Business + Cost Review
+        ↓
+高召回候选 → 证据验证 → 反证调查
+        ↓
+Root-cause dedup + P0/P1/P2/P3
+        ↓
+Recommended Execution Order
+        ↓
+持久化 Report + Stable Finding Ledger
 ```
 
-因此，即使一段实现：
+## 默认就是全面审计
 
-- 当前没有复现 bug；
-- 测试全部通过；
-- 最终业务结果也正确；
+正常调用这个 Skill 时，不需要再让用户选择“工程 / 业务 / 优化”模式。
 
-只要可以证明它通过不必要的重复状态、补丁层、互相修复的 recovery、无真实消费者的 abstraction 等方式完成了一个本可显著更简单完成的功能，仍然可以成为正式的 **Accidental Complexity** finding。
+这里的“全面”不是要求每个文件都逐行读一遍，而是：**所有对目标有实质影响的系统边界、业务流程和风险面，都必须进入 Audit Plan，并在最终 Coverage Ledger 中诚实标记实际覆盖深度。**
 
-这不等于“代码越少越好”。真实的业务状态、并发、失败恢复、兼容性和性能约束可能天然复杂。只有当 reviewer 能证明某层没有独立责任，或责任可以安全收敛到更简单机制，并保持所有必要行为时，才可以判为 accidental complexity。
-
-详细规则见 [`references/first-principles-review.md`](references/first-principles-review.md)。
-
-## 默认会审什么
-
-正常调用这个 Skill 时，默认就是**全面审计**，不需要用户再选择模式。
-
-它会根据项目实际情况覆盖：
-
-- 第一性原理、最小充分机制与 accidental complexity；
-- 工程正确性、调用链与契约传播；
-- 业务规则、Domain Model、业务 invariant 与生命周期；
-- 架构边界、ownership、source of truth、跨模块耦合；
-- timeout、retry、restart、reconciliation、并发与状态一致性；
-- 数据完整性、兼容性、配置、迁移与外部系统语义；
-- CPU、内存、I/O、网络、算法复杂度和长时间运行稳定性；
-- 冗余代码、重复状态、过度抽象、dead code、依赖与配置膨胀；
-- 测试质量、可观测性、部署、回滚与运维风险；
-- 存在真实 trust boundary 时的安全问题；
-- 对应 Domain Pack 中的领域特有风险。
-
-First Principles / Engineering / Business Logic / Optimization 是不同的内部 reasoning lens，目的是减少思维盲区；**最终不会输出几份割裂报告，而会合并成一份按风险和根因优先级排序的审计结论。**
-
-## 最终产物
-
-一次完整审计必须形成可长期保存的 Markdown 报告。
-
-默认结构大致为：
+因此报告能明确区分：
 
 ```text
-Full-Spectrum Review Report
-├── 审计元数据 / exact revision
-├── Executive Summary
-├── P0/P1/P2/P3 总览
-├── 建议修复执行顺序
-├── P0 Critical Findings
-├── P1 High Findings
-├── P2 Medium Findings
-├── P3 Low Findings
-├── Positive Findings / Keep As-Is
-├── Test / Verification Gaps
-└── Evidence / Appendix
+没有发现问题
+≠
+这部分根本没有审到
 ```
 
-正式 finding 可以包括：
+对于 PR，全面审查的是 PR 及其所有重要影响链路；对于 repository-wide audit，才覆盖整个系统的重要生产/业务路径。
 
-- `Defect`：实现或行为错误；
-- `Business`：业务语义错误或不完整；
-- `Reliability`：恢复、并发、状态等风险；
-- `Performance`：有实际 workload 的性能/资源问题；
-- `Accidental Complexity`：现有需求可以由显著更简单的充分机制完成，但当前额外层没有独立 requirement；
-- `Optimization`：行为正确但成本明显不必要；
-- `Maintainability` / `Security` / `Test Gap` 等。
+## 第一性原理：不把现有架构当成问题定义
 
-其中 First-Principles finding 需要额外说明：
+这是本 Skill 的核心特色之一。
+
+Reviewer 在接受一个重要 subsystem 的现有设计之前，要先独立重建：
 
 ```text
-Required outcome
-Irreducible constraints / invariants
-Minimum sufficient mechanism
-Current mechanism
-Accidental complexity delta
-Simplification direction
-Behavior-preservation plan
+Required Outcome
++ Irreducible Constraints
++ Required Invariants
+→ Minimum Sufficient Mechanism
 ```
 
-所以不能只写一句“这里太复杂了”。
+再拿它与当前实现比较。
 
-如果 AI 对目标仓库有写权限并且用户授权写入，优先遵循项目已有审计文档规范；没有现成规范时默认沉淀到：
+因此即使代码**没有已知 bug、测试全部通过**，下面这种情况仍然可以成为正式 finding：
 
 ```text
-docs/reviews/<YYYY-MM-DD>-full-spectrum-review.md
+本来只需要：
+单一 authoritative state
+→ explicit UNKNOWN
+→ reconciliation
+
+实际却变成：
+cache
++ registry
++ retry coordinator
++ watchdog
++ fallback reconciler
++ cleanup worker
 ```
 
-PR 审查则可使用：
+但 First Principles 不是“删代码许可证”。
+
+任何 `Accidental Complexity` finding 在发布前都必须主动调查：
+
+> **Why does this layer exist?**
+
+Reviewer 要尽可能查历史、测试、ADR、caller、operator workflow、外部契约等反向证据。如果没有做 meaningful disconfirmation attempt，只能记为 observation/hypothesis，不能作为正式复杂度 finding。
+
+权威规则见 [`references/first-principles-review.md`](references/first-principles-review.md) 与 [`references/finding-protocol.md`](references/finding-protocol.md)。
+
+## Necessity 与 Cost 分开
+
+为了避免两个 reviewer 重复判断同一件事，现在职责明确分为：
+
+### First Principles = Necessity
+
+回答：
+
+> **这个东西该不该存在？**
+
+包括 duplicated ownership/state、无必要 abstraction、recovery layer、compatibility path、config branch、worker/cache/state-machine complexity 等。
+
+### Optimization = Cost
+
+回答：
+
+> **既然这个机制确实需要存在，它运行得是否足够高效？**
+
+包括 algorithmic cost、CPU、memory、I/O、network、batching、lock contention、resource lifecycle、external API/storage/model cost 和 long-running stability。
+
+权威规则见 [`references/optimization-review.md`](references/optimization-review.md)。
+
+## Business Logic 不默认相信代码和测试
+
+Business Review 会先建立当前项目自己的 **Business Authority Map**，判断本次业务真相主要来自哪些证据：外部协议/服务契约、正式 spec / ADR、用户承诺、测试、现有实现等。
+
+这个权威顺序不是 Core 写死的，因为不同领域并不相同。
+
+如果业务意图无法可靠确定，Reviewer 应把它写入 **Open Questions for the Maintainer**，而不是伪装成一个 P1/P2 finding。
+
+详见 [`references/business-logic-review.md`](references/business-logic-review.md)。
+
+# Domain Packs
+
+这是 Full-Spectrum Review 的另一个核心设计。
+
+Core Skill 只负责**怎么审**；Domain Pack 负责**这个领域有哪些不能靠通用软件知识可靠推导的真实规则**。
 
 ```text
-docs/reviews/pr-<number>-<short-head>-full-spectrum-review.md
+Core Audit Method
+        +
+0..N Domain Packs
 ```
 
-这样审查结果不会只存在于一次聊天里，而会成为项目本身可以继续跟踪、复审和修复的工程资产。
+一个真实项目可以同时加载多个领域包，例如：
 
-## 优先级
+```text
+trading
++ distributed-systems
++ accounting
+```
 
-| 优先级 | 含义 |
-|---|---|
-| **P0 Critical** | 灾难性资金/数据损失、系统性 compromise、不可恢复生产状态 |
-| **P1 High** | 现实条件下的重大 correctness、业务、状态、恢复、安全、性能或生产风险；核心路径上严重模糊 ownership/safety 的 accidental complexity 也可能达到 P1 |
-| **P2 Medium** | 真实 defect、重要弱点、显著优化机会，或明显增加状态空间/失败面/运维与维护成本的 accidental complexity |
-| **P3 Low** | 具体但非阻塞的低影响改进 |
+Core 不硬编码 pack 名称。Reviewer 检查可用 `domains/`，根据 `applies-when` 加载全部适用包，并把 pack 名称/版本记录进 Audit Metadata。
 
-没有当前 bug，不代表复杂度问题只能是 P3；但纯审美上的“我更喜欢这样写”也不能被拔高成 P1/P2。
+### Domain Pack 负责
 
-最终报告严格按照 **P0 → P1 → P2 → P3** 排序，而不是按照文件顺序或者 AI 发现问题的先后顺序。
+- Domain Glossary；
+- Domain Invariants；
+- External Semantics；
+- Domain-specific Scenario Sweep；
+- Severity Context。
 
-另外还会给出一个 **Recommended Execution Order**：如果先修一个错误 ownership / source-of-truth / responsibility boundary，就能让多层 guard、retry、state 或 recovery 一起消失，会优先建议修根因，而不是继续逐条打补丁。
+### Core 负责
 
-## 为什么不做成一份巨型 Prompt
+- First-Principles 方法；
+- finding 验证与反证门槛；
+- P0/P1/P2/P3 与 Confidence；
+- root-cause dedup；
+- report / coverage / stable-ID lifecycle。
 
-核心 `SKILL.md` 只负责审计流程、范围纪律和最终交付要求；具体审查知识放在 `references/` 中按需读取：
+Pack 可以用领域语言**实例化** Core 原则，但不能复制一套自己的 finding bar 或 report schema。
+
+统一 contract 见 [`domains/_CONTRACT.md`](domains/_CONTRACT.md)。
+
+## Trading Domain Pack
+
+当前内置：[`domains/trading/DOMAIN.md`](domains/trading/DOMAIN.md) `v2`。
+
+它用于量化交易、交易所/券商执行、模拟盘与真实资金系统，额外关注：
+
+- K 线/行情时间语义与未来函数；
+- backtest / simulation / live parity；
+- signal / intent / order / fill / position 的概念分离；
+- partial fill、cancel/fill race、UNKNOWN order outcome；
+- position truth、restart reconciliation、manual takeover；
+- precision / minimum order / rounding；
+- PnL、fee、funding 与数量守恒；
+- protection order；
+- rate limits / throttling / bans；
+- server time / signing window；
+- reduce-only / close-position / post-only / TIF / trigger-price semantics；
+- hedge vs one-way、margin mode、liquidation/ADL；
+- symbol lifecycle / maintenance / delisting；
+- multi-instance account ownership；
+- API credential permission scope。
+
+这些内容保持 **provider-neutral**：pack 要求 Reviewer 去核实目标交易所真实 contract，而不是把 Binance/OKX/Bybit 任意一家当前参数写成通用真理。
+
+未来可以按同一 contract 增加 payments、accounting、distributed-systems、security、database、AI-agent 等 Domain Packs，而**不修改 `SKILL.md` 来注册新包**。
+
+## Finding 不再是一次性编号
+
+审计报告不是一次性快照。
+
+Finding 使用 stable ID，并通过轻量状态持续复审：
+
+```text
+OPEN
+FIXED
+ACCEPTED
+SUPERSEDED
+REOPENED
+```
+
+优先级变化不会改变 ID；ID 也不会因为报告重新排序而重排。
+
+如果目标仓库没有自己的审计体系，默认使用：
+
+```text
+docs/reviews/
+├── INDEX.md
+├── 2026-09-02-full-spectrum-review.md
+└── pr-123-a1b2c3d-full-spectrum-review.md
+```
+
+`INDEX.md` 只是轻量 finding ledger，不是再造一个 Jira。
+
+权威规则见 [`references/reporting-protocol.md`](references/reporting-protocol.md)。
+
+## 报告里有什么
+
+一次完整审计通常包括：
+
+- Audit Metadata / exact revision / Skill revision；
+- Loaded Domain Packs；
+- Coverage Ledger；
+- Executive Summary；
+- Priority Overview；
+- Recommended Execution Order；
+- P0 → P1 → P2 → P3 findings；
+- Open Questions for the Maintainer；
+- Positive Findings / Keep As-Is；
+- Evidence / Verification Gaps。
+
+Finding 的 canonical schema、Priority、Confidence、Status 只有一个权威来源：[`references/finding-protocol.md`](references/finding-protocol.md)。README 只做解释，不复制另一套规范。
+
+## 审计默认只读
+
+即使 Agent 有 repository write 权限，**审计过程也不会顺手修改业务代码或配置**。
+
+审计授权下的写入范围只包括 report / INDEX 等审计资产。真正修复必须成为用户另行明确授权的任务。
+
+这对生产系统、真实资金系统尤其重要。
+
+## 目录
 
 ```text
 full-spectrum-review/
@@ -177,88 +253,83 @@ full-spectrum-review/
 ├── README.en.md
 ├── LICENSE
 ├── ACKNOWLEDGEMENTS.md
-└── references/
-    ├── first-principles-review.md
-    ├── engineering-review.md
-    ├── business-logic-review.md
-    ├── optimization-review.md
-    ├── finding-protocol.md
-    ├── reporting-protocol.md
-    └── trading-domain.md
+├── references/
+│   ├── first-principles-review.md
+│   ├── engineering-review.md
+│   ├── business-logic-review.md
+│   ├── optimization-review.md
+│   ├── finding-protocol.md
+│   ├── reporting-protocol.md
+│   └── example-finding.md
+└── domains/
+    ├── _CONTRACT.md
+    └── trading/
+        └── DOMAIN.md
 ```
 
-这样既能做到全面，又不会让一份十几 k token 的固定 Prompt 挤占代码上下文并稀释注意力。
-
-## Domain Pack
-
-核心 Skill 保持领域无关。
-
-当前包含 `references/trading-domain.md`，用于交易、量化和真实资金系统，额外检查：
-
-- 行情/K 线时间语义和未来函数；
-- backtest / simulation / live parity；
-- order lifecycle 与 partial fill；
-- UNKNOWN order outcome 和重复下单；
-- position truth 与 restart reconciliation；
-- tick / step / minimum notional / rounding；
-- PnL、fee、funding 与数量守恒；
-- 止损止盈等保护单；
-- 自动交易与人工接管之间的 ownership。
-
-后续可以继续增加支付、电商、账务、分布式系统、AI Agent 等 Domain Pack，而不需要改变核心审计流程。
+`SKILL.md` 保持流程与 contract 精简；详细规则、示例和领域知识按需读取，避免固定巨型 Prompt 挤占源码上下文。
 
 ## 安装
 
-本仓库遵循 Agent Skills 的 `SKILL.md` 目录格式。把整个仓库 clone/copy 到对应客户端 Skill 目录即可。
+本仓库遵循 `SKILL.md` Agent Skills 目录格式。
+
+如果客户端支持厂商中立的 `.agents/skills/`，推荐优先使用它：
 
 ```bash
-# Claude Code，用户级
-git clone https://github.com/liuyejinghong/full-spectrum-review.git ~/.claude/skills/full-spectrum-review
-
-# Codex，用户级
-git clone https://github.com/liuyejinghong/full-spectrum-review.git ~/.codex/skills/full-spectrum-review
+git clone https://github.com/liuyejinghong/full-spectrum-review.git .agents/skills/full-spectrum-review
 ```
 
-常见项目级目录还包括：
+目前已核实的常见位置/方式包括：
 
-```text
-.claude/skills/
-.codex/skills/
-.cursor/skills/
-.gemini/skills/
-.github/skills/
-```
+| Client | Project / workspace | User / global |
+|---|---|---|
+| Cursor | `.agents/skills/` 或 `.cursor/skills/` | `~/.agents/skills/` 或 `~/.cursor/skills/` |
+| Gemini CLI | `.agents/skills/` 或 `.gemini/skills/` | `~/.agents/skills/` 或 `~/.gemini/skills/` |
+| GitHub Copilot | `.agents/skills/` / `.github/skills/` / `.claude/skills/` | `~/.agents/skills/` / `~/.copilot/skills/` |
+| Codex | `.codex/skills/` | `$CODEX_HOME/skills/`（通常为 `~/.codex/skills/`） |
+| Claude Code | `.claude/skills/` | `~/.claude/skills/` |
 
-## 使用方式
+不同客户端的发现/激活机制会变化；以对应客户端当前官方文档为准。Skill 本身不依赖某个 harness 的工具名、subagent 或 GitHub API。
 
-最简单的调用方式就是：
+## 使用
+
+Repository-wide audit：
 
 ```text
 使用 full-spectrum-review 对这个项目进行一次全面审计。
-从第一性原理重新推导关键功能的最小充分机制，不要默认接受现有架构；同时审查代码、业务逻辑、架构、性能、稳定性和可精简项。验证并按 P0/P1/P2/P3 排序，最终把完整报告沉淀到仓库。
+理解业务和架构，从第一性原理重建关键机制，加载所有适用 Domain Packs，诚实记录 coverage，验证并按优先级排序 findings，最终沉淀 report + audit ledger。
 ```
 
-审 PR：
+PR audit：
 
 ```text
 使用 full-spectrum-review 全面审查 PR #123。
-绑定 exact head，从第一性原理检查这次实现是否存在不必要复杂度，并全面检查受影响链路；最终按优先级生成并沉淀审查报告，存在 blocking finding 时给出 REQUEST_CHANGES。
+绑定 exact head，覆盖所有重要受影响链路，最终生成 compact canonical report；blocking finding 存在时给出 REQUEST_CHANGES。
 ```
 
 ## 设计原则
 
-- 全面审计是默认行为；专项审查是显式例外。
-- **先问最小充分机制，再接受现有实现。**
-- 先理解系统和业务，再判断代码。
-- 正确但无必要复杂的实现也可以是正式 finding。
-- 第一性原理不是“越少越好”；真实 requirement / invariant 优先于简洁。
-- 候选问题阶段追求高召回，正式 finding 追求高证据门槛。
-- 测试是证据，不是真理，也不能证明现有架构有存在必要。
-- changed lines 是审查起点，不是 reasoning 边界。
-- finding 按根因去重，不按症状堆数量。
-- 优化不仅是“跑得快”，还包括减少状态、责任、抽象和失败路径。
-- 删除错误复杂度往往比继续增加 guard 更能提高长期稳定性。
-- 最终交付必须让维护者清楚知道：**先修什么、为什么、哪些复杂度可以消失、如何证明改完仍然正确。**
+- 全面审计是默认；专项审查是显式例外。
+- 全面意味着 coverage 可证明，不意味着每个文件同深度扫描。
+- 先重建问题，再接受现有解决方案。
+- Necessity 与 Cost 分离。
+- 找 accidental complexity 必须主动寻找反证。
+- 测试是证据，不是真理。
+- changed lines 是起点，不是 reasoning 边界。
+- finding 按 root cause 去重，不按症状堆数量。
+- severity 与 confidence 分开。
+- Domain knowledge 可插拔，Core method 不随领域增长。
+- 审计对被审实现默认只读。
+- 最终交付必须让维护者知道：**审到了什么、没审到什么、先修什么、为什么、如何证明修好了，以及什么不要乱改。**
+
+## 参考标准与客户端文档
+
+- Agent Skills open standard: https://agentskills.io/
+- Cursor Agent Skills: https://cursor.com/docs/skills
+- Gemini CLI Agent Skills: https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/skills.md
+- GitHub Copilot Agent Skills: https://docs.github.com/en/copilot/concepts/agents/about-agent-skills
+- OpenAI Codex skills examples/docs: https://github.com/openai/codex/tree/main/.codex/skills
+- Claude Agent Skills authoring guidance: https://docs.claude.com/en/docs/agents-and-tools/agent-skills/best-practices
 
 ## License
 
