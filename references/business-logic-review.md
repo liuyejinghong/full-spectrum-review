@@ -1,31 +1,51 @@
-# Business Logic Review Axis
+# Business Logic Review
 
-Use this axis to answer: **Does the implemented behavior correctly represent the intended business/domain reality?**
+Use this lens to answer:
 
-Do not begin by hunting code smells. Reconstruct the domain first. Treat code, tests, documentation, and existing behavior as evidence; none of them is automatically the authoritative definition of correct business behavior.
+> **Does the implemented behavior correctly represent the intended business/domain reality?**
 
-## Build the business model first
+Do not begin by hunting code smells. Reconstruct the domain first. Code, tests, documentation, and existing behavior are evidence; none is automatically the authoritative definition of correct business behavior.
 
-Before publishing findings, reconstruct four internal artifacts when the domain is non-trivial:
+## Build a Business Authority Map
 
-1. **Domain glossary** — define the important entities and distinguish concepts that must not be conflated.
-2. **Business rule inventory** — explicit and implicit rules the system is expected to enforce.
-3. **Invariant ledger** — facts that must always remain true.
+Before publishing material business findings, identify which evidence sources are authoritative **for this target** and why.
+
+Possible sources include:
+
+- external protocols, exchange/provider contracts, laws/standards, or other realities the software cannot redefine;
+- explicit product/business specifications and ADRs;
+- user-facing commitments/documentation;
+- tests that encode intended behavior;
+- existing implementation and operational behavior.
+
+Do **not** hard-code one universal ordering across all domains. A protocol implementation, an internal product, and a trading system may have different authority relationships.
+
+Record material conflicts. If only code/tests exist, do not pretend they establish an independent business truth; use them to detect internal inconsistency and compare against any external reality that is available.
+
+If the required intent remains ambiguous, emit an **Open Question for the Maintainer** through `reporting-protocol.md` instead of manufacturing a business finding.
+
+## Reconstruct the business model
+
+For non-trivial domains, build these internal reasoning artifacts:
+
+1. **Domain glossary** — important entities and concepts that must not be conflated.
+2. **Business rule inventory** — explicit/implicit rules required for valid behavior.
+3. **Invariant ledger** — facts that must remain true.
 4. **Lifecycle/scenario matrix** — expected outcomes across normal, boundary, failure, duplicate, delayed, and recovery scenarios.
 
-Do not publish these artifacts unless useful to the user; use them to reason.
+Publish them only when useful; their primary purpose is to discipline reasoning.
 
 ## Core lenses
 
 ### Business intent
 
-Ask whether the implementation solves the actual user/business problem rather than merely satisfying a local technical interpretation of the Issue.
+Ask whether the implementation solves the actual user/business problem rather than a local technical interpretation of an Issue or test.
 
 Look for missing behavior, scope drift, contradictory requirements, and technically clean implementations of the wrong rule.
 
 ### Domain model
 
-Identify the real entities and ownership boundaries. Check whether implementation concepts incorrectly collapse distinct domain concepts or create duplicate meanings.
+Identify real entities, ownership, and concept boundaries. Check whether implementation concepts collapse distinct facts or create duplicate meanings.
 
 Typical warning pattern:
 
@@ -33,60 +53,54 @@ Typical warning pattern:
 intent == request == acknowledgement == execution == final state
 ```
 
-Those may be separate business facts even when represented by similar data.
+These may be different business facts even if represented by similar data.
 
 ### Business-rule completeness
 
-Inventory the rules required for a business operation to be considered complete. Check whether the code enforces only the happy-path subset.
-
-A feature can be locally correct yet business-incomplete when lifecycle, reconciliation, cancellation, expiry, reversal, or operator ownership is missing.
+Inventory what must be true for a business operation to be complete. Check whether the code implements only the happy-path subset while omitting cancellation, expiry, reconciliation, reversal, partial completion, or operator ownership that the domain requires.
 
 ### Business invariants
 
-Derive invariants from the domain rather than from the implementation.
+Derive invariants from the authority map/domain rather than from current implementation shape.
 
-Examples of generic forms:
+Generic forms include:
 
-- one event must not be accounted for twice;
-- an object cannot simultaneously have incompatible owners;
+- one event/value change must not be accounted for twice;
+- one business object must not have incompatible active owners;
 - terminal state must not silently become active again;
-- authoritative external truth and local derived state must eventually reconcile;
+- authoritative external truth and local derived state must reconcile when the domain requires convergence;
 - quantity/value conservation must hold across transitions;
-- UNKNOWN must not be silently interpreted as success or failure when the business requires confirmation.
+- `UNKNOWN` must not silently become success/failure when confirmation is required.
 
-### Lifecycle and state-machine semantics
+### Lifecycle and state semantics
 
-Review a business entity across its whole lifecycle, not file-by-file.
+Review an entity across its whole lifecycle, not file-by-file.
 
-For every meaningful transition, ask what happens on success, rejection, partial success, timeout, duplicate event, late event, reordered event, crash, restart, cancellation, and manual intervention when those states are reachable.
+For meaningful transitions, consider success, rejection, partial success, timeout, duplicate/late/reordered event, crash, restart, cancellation, expiry, and manual intervention when reachable.
 
 ### Temporal semantics
 
-Ask not only what happened, but **what was knowable at the decision time**.
+Ask not only what happened but **what was knowable at decision time**.
 
-Separate event time, receive time, decision time, submission time, acknowledgement time, persistence time, and reconciliation time when the domain depends on timing.
+Separate event time, receive time, decision time, submission time, acknowledgement time, persistence time, and reconciliation time when timing matters.
 
-Look for future information, stale decisions, wrong ordering assumptions, or behavior that is correct only because tests collapse time.
+Look for future information, stale decisions, wrong ordering assumptions, or tests that accidentally collapse time.
 
-### Economic and accounting semantics
+### Economic/accounting semantics
 
-When the domain moves money, inventory, credits, balances, quotas, or quantities, check conservation, rounding, fees, partial operations, reversals, average cost/basis, and ownership changes.
+When the domain moves money, inventory, credits, balances, quotas, or quantities, check conservation, rounding, fees, partial operations, reversal, average cost/basis, and ownership changes.
 
-Treat this like an accounting audit: every change in value or quantity should have an explainable cause.
+Every value/quantity change should have an explainable business cause.
 
 ### External-reality mapping
 
-Do not assume the repository's abstraction accurately models an external service, exchange, payment provider, queue, database, or protocol.
+Do not assume a repository abstraction accurately represents an exchange, payment provider, queue, database, broker, protocol, or other external system.
 
-Check whether local statuses and method names are stronger than what the external system actually guarantees.
-
-A local `success` often means only that a request was accepted, not that the desired business outcome completed.
+Local names/statuses may be stronger than the external guarantee. `success` may mean request accepted rather than business outcome completed.
 
 ### Cross-feature interaction
 
-Review pairwise and multi-feature combinations when responsibilities overlap.
-
-Examples:
+Review combinations where responsibilities overlap, for example:
 
 - automation × manual takeover;
 - retry × idempotency;
@@ -100,30 +114,33 @@ Two features can each be correct alone and wrong together.
 
 ### Failure business semantics
 
-A technically correct exception handler can still implement the wrong business action.
+A technically correct exception handler may still choose the wrong business next state.
 
-For each important failure, ask what the business-safe next state is. In ambiguous external operations, retry may be wrong until reconciliation proves whether the first operation occurred.
+For important failures, determine the business-safe next state. For uncertain external side effects, retry may be invalid until reconciliation establishes whether the first operation happened.
 
 ### Mode parity
 
-When the same business exists in multiple modes—simulation/production, offline/online, dry-run/live, batch/realtime—compare semantics rather than shared source code.
+When the same business exists in simulation/production, offline/online, dry-run/live, batch/realtime, or similar modes, compare semantics rather than shared source code.
 
-Check timing, pricing/input assumptions, fees/costs, partial operations, rejection behavior, ordering, and state transitions.
+Check timing, input/pricing assumptions, fees/costs, partial operations, rejection behavior, ordering, and state transitions.
 
 ### Counterfactual scenarios
 
-Construct realistic scenarios and compare expected business outcome with actual implementation outcome.
+Construct realistic scenarios and compare expected business outcome with actual implementation outcome: normal completion, partial completion, unknown external outcome, rejection, duplicate delivery, reordering, crash boundary, restart, stale/missing input, manual intervention, and recovery.
 
-Useful scenario classes include normal completion, partial completion, timeout with unknown external outcome, rejection, duplicate delivery, reordering, crash at a state boundary, restart, stale input, missing input, manual intervention, and recovery.
+Domain Packs may add domain-specific scenarios and invariants; they do not replace this reasoning method.
 
 ## Business finding bar
 
-A publishable finding should state:
+A publishable business finding must state:
 
-1. the business rule or invariant that should hold;
-2. the realistic scenario that exercises it;
-3. the implementation behavior;
-4. the mismatch between expected and actual behavior;
-5. the concrete consequence.
+1. the Business Authority Map evidence supporting the rule/invariant;
+2. the rule/invariant that should hold;
+3. a realistic scenario exercising it;
+4. current implementation behavior;
+5. the mismatch;
+6. the concrete consequence.
 
-Do not report disagreements that are merely alternative product designs unless the repository/specification establishes which behavior is required.
+Do not publish a mere alternative product design as a defect. When intent is not resolvable from available authority, use an Open Question.
+
+Use canonical type/priority/confidence/status/schema rules from `finding-protocol.md`.
