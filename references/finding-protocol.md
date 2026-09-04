@@ -54,6 +54,10 @@ The reviewer does **not** need every evidence source and must not fabricate unav
 
 No disconfirmation attempt → no Accidental Complexity finding. Keep it as an observation/hypothesis until investigated.
 
+## Stated-rationale check for improvement-type findings
+
+A finding that proposes new machinery — new tests, new contracts, new mechanisms, new fixtures — must first check the maintainer's stated rationale: docs limitations sections, ADRs, and the issue tracker for a prior position on exactly this proposal. A documented rejection or accepted tradeoff (cost, scope, philosophy) turns the candidate into `ACCEPTED`-with-rationale or an Open Question, never a fresh finding. Absence of any prior position changes nothing: proceed on evidence. This is disconfirmation generalized from "why does this layer exist" to "why doesn't this thing exist" — same exit discipline, no new workflow.
+
 ## Root-cause deduplication
 
 Group symptoms that share one root cause. Do not inflate counts by reporting each downstream guard, retry, cache, or cleanup path independently when one ownership/state error explains them.

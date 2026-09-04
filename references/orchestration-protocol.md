@@ -239,6 +239,7 @@ Lead:
 - creates the Coverage Ledger skeleton;
 - builds the Shared Audit Brief;
 - defines Audit Units.
+- probes test-execution capability (toolchain, dependencies, network); if tests cannot run, records it once as a wave-level evidence limitation that caps confidence wave-wide instead of repeating it per finding.
 
 ### Plan enumeration (closing silent omissions)
 

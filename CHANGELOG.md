@@ -8,6 +8,16 @@ Domain Pack 独立版本化；例如 Trading Pack 的版本记录在 `domains/tr
 
 > 说明：下面的早期版本根据仓库实际演进整理。当前仓库尚不要求每个版本都必须已有 Git tag 或 GitHub Release；后续正式发布时可以让 tag/release 与 `VERSION` 对齐。
 
+## [0.11.0] - 2026-09-04
+
+小优化（additive only，两条协议各加几行 + 1 个回归 case）。来源：freqtrade 首审的 #13529 教训（parity 缺口是已知权衡，却被当 fresh finding 发布）。
+
+### Added
+
+- **Stated-rationale 检查**（`finding-protocol.md`）：提议新机制/测试/契约的 finding，发布前先查 maintainer 在先立场（docs limitations、ADR、issue 记录）；有明确拒绝或接受理由 → ACCEPTED-with-rationale 或 Open Question。反证从"为什么这层存在"推广到"为什么这个东西不存在"。
+- **测试环境探针**（`orchestration-protocol.md` Phase 0）：开工先探测试执行能力；跑不起来记一次 wave 级证据缺口（全波置信封顶），不再逐 finding 重复。
+- **evals case-06**（accepted-tradeoff guard）：有文档化权衡在先时，不断言修复、必须引用权衡；无引用发布 parity 诉求即挂。
+
 ## [deploy-pack v3] - 2026-09-04
 
 Domain Pack 独立版本化，本条目不影响 Core `0.10.0`。来源：独立渐进交付实现的收敛验证（Argo Rollouts canary/pause/abort 语义、Flagger 度量门禁自动 promotion/rollback、SRE Workbook canarying 六原则）。
