@@ -189,6 +189,8 @@ Do not publish "hard to maintain" as a finding.
 
 Show a concrete maintenance mechanism, such as a supported change that must be duplicated across several owners/mappings, a contract whose change requires non-local synchronized edits, or a structure that predictably creates inconsistent variants. State the likely change/error cost and evidence.
 
+Duplicated mapping tables that must agree with each other — a key list copied in two or more places, a gate table versus its producer-side field list — are a concrete maintenance mechanism by themselves: a change to one copy that misses the other silently alters governed behavior. Show the copies, the drift (or the missing drift detection), and the change that would diverge them. Prefer a single source of truth; where copies remain, the gate must diff them.
+
 ## Test Gap bar
 
 Do not publish "needs more tests" as a finding.

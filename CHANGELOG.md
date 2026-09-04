@@ -8,6 +8,16 @@ Domain Pack 独立版本化；例如 Trading Pack 的版本记录在 `domains/tr
 
 > 说明：下面的早期版本根据仓库实际演进整理。当前仓库尚不要求每个版本都必须已有 Git tag 或 GitHub Release；后续正式发布时可以让 tag/release 与 `VERSION` 对齐。
 
+## [0.8.0] - 2026-09-04
+
+### Added
+
+- **可枚举集合穷举规则（Enumerable-set completeness）**：gate / allowlist / key 表 / 参数注册表 / 枚举 / phase 清单 / 路由×鉴权矩阵 / 业务操作清单 / 生命周期 state×event 矩阵这类有界集合，默认 `deep + 穷举`，禁用 `sampled`——成员必须从消费该集合的源码/契约（而非描述它的注释/文档）逐个列出，并逐个定性为 `must-govern` / `covered-elsewhere`（注明兜底机制）/ `remove-or-fix`；无法定性的成员记为 evidence gap，不得隐式放行。Reviewer Packet 携带成员清单（含分类）；Coverage Ledger 行必须标注成员数与真相源（如 `gate keys 52/52, source: run_config producer`），`sampled` 对这类集合永远不能标 `COMPLETE`。
+- Maintainability bar 下明确：必须相互一致的映射表复本（同一份 key 表抄多份、gate 表 vs 生产侧字段表）本身就是具体维护机制；finding 须出示复本、漂移（或缺失的漂移检测）与可致分歧的改动。优先单一真相源；复本保留时 gate 必须 diff 它们。
+- Lead 职责 +1（第 13 条）：对 correctness / money-state / safety 路径上的有界集合强制穷举；Phase 3 核验深度豁免这类集合——不因影响分级降为引用核验。
+
+> 动因：一次仓库级审计中，研究门禁的 key 表（`PARAM_KEYS` 32 个）以 `sampled` 合规交差，漏掉生产侧约 20 个经济字段；复审以穷举法逐字段定性才挖出核心问题。根因是协议只给了 publish 精度 bar，没有 discovery 召回 bar，且 `sampled` 的定义（representative, not exhaustive）为漏检提供了合法外衣。
+
 ## [trading-pack v4] - 2026-09-02
 
 Domain Pack 独立版本化，本条目不影响 Core `0.7.0`。来源：市场监管框架（EU RTS 6、US SEC 15c3-5）与成熟开源参考实现（NautilusTrader / Hummingbot / Freqtrade / QuantConnect Lean / Jane Street 确定性仿真实践）的调研蒸馏。

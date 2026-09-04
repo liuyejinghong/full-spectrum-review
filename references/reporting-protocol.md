@@ -59,6 +59,8 @@ Use plain equivalents if the target repository prefers different terminology, bu
 
 A full audit means all materially relevant areas are represented in the ledger. It does not require identical depth everywhere.
 
+For enumerable sets (see `orchestration-protocol.md`), the ledger row must name the member count and the source of truth, for example `gate keys 52/52, source: run_config producer`. A `sampled` depth can never support `COMPLETE` for such a set — mark `PARTIAL` with the uncovered members listed, or reach `deep` with full enumeration.
+
 When orchestration uses multiple Audit Units, the Lead may add an `Audit Unit / Reviewer` column if it materially improves traceability. Do not expose vendor-specific worker IDs unless useful to the maintainer.
 
 ## Proportional reporting

@@ -85,6 +85,20 @@ Assign every planned module/file area exactly one **primary owner** unit, respon
 
 A different unit may re-examine the same code only under a declared cross-cutting question the primary owner's local review does not answer — an ownership/source-of-truth boundary, an end-to-end business invariant, a domain lifecycle, a cross-module resource path. Distinct-question verification is not duplication; undifferentiated rescanning is. The goal is unchanged: no two units spend context answering the same question about the same code.
 
+## Enumerable-set completeness
+
+Some mechanisms fail as a set: a gate, allowlist, key table, parameter registry, enum, phase list, route×auth matrix, business-operation inventory, or lifecycle state×event matrix is only as complete as its least-covered member. Representative sampling is not a valid depth for these sets — one unexamined member can invalidate every conclusion drawn from the rest.
+
+When an Audit Unit encounters an enumerable set — any bounded collection whose members each carry independent correctness, safety, or business meaning — it must:
+
+1. enumerate every member from the source of truth (the code or contract that consumes the set, not a comment or document that describes it);
+2. classify each member: `must-govern` (impacts correctness/safety/economics and is human-adjustable), `covered-elsewhere` (governed by another mechanism such as a receipt hash, with the covering mechanism named), or `remove-or-fix` (dead, illusory, or misrepresenting configuration);
+3. report members it could not classify as evidence gaps, never as implicit passes.
+
+Typical enumerable sets include: gate/allowlist key tables and their producer-side field lists; duplicated mapping tables that must agree with each other; receipt `allowed diff` lists; lifecycle states×events; business operations×recovery paths; mode pairs×population-defining assumptions (for example fees, funding, or slippage); route×auth decisions; release phases×test coverage. These are mechanism classes, not a checklist of named artifacts: if no such set exists on the audited paths, the rule is vacuously satisfied — record none rather than manufacturing work.
+
+A Reviewer Packet carries the member inventory (or a reference to a recoverable artifact holding it) with per-member classification. The Lead re-opens source for any enumerable set on a correctness, money/state, or safety path regardless of the unit's planned depth — `sampled` is never sufficient for these sets.
+
 ## Lead / Coordinator responsibilities
 
 The Lead owns the audit as a whole. It must:
@@ -100,7 +114,8 @@ The Lead owns the audit as a whole. It must:
 9. verify publishable findings against `finding-protocol.md`;
 10. deduplicate by root cause;
 11. allocate/reuse stable finding IDs and final priority/status;
-12. produce the canonical report and terminal verdict when applicable.
+12. produce the canonical report and terminal verdict when applicable;
+13. enforce enumerable-set completeness for bounded sets on correctness, money/state, or safety paths.
 
 The Lead does **not** need to retain every source file in active context. It must retain enough shared facts and evidence references to judge worker packets and reopen source evidence when needed.
 
@@ -257,7 +272,7 @@ Lead:
 - updates Coverage Ledger truthfully;
 - produces one canonical report.
 
-Verification depth follows impact, and the evidence bar is redistributed, never lowered: every publishable candidate must still satisfy `finding-protocol.md`. The Lead re-opens source directly for P0/P1 candidates and for any candidate whose evidence is contested or load-bearing across units, and resolves lighter candidates through their cited references and cross-unit consistency. Never drop a candidate to save verification effort — if its evidence cannot support publication, record an observation or evidence gap instead. Re-reading a unit's entire scope to confirm its packet defeats the decomposition; accepting packets without reopening any evidence is a rubber stamp.
+Verification depth follows impact, and the evidence bar is redistributed, never lowered: every publishable candidate must still satisfy `finding-protocol.md`. Enumerable sets are exempt from redistribution — see `Enumerable-set completeness`; they are always verified exhaustively on correctness, money/state, or safety paths. The Lead re-opens source directly for P0/P1 candidates and for any candidate whose evidence is contested or load-bearing across units, and resolves lighter candidates through their cited references and cross-unit consistency. Never drop a candidate to save verification effort — if its evidence cannot support publication, record an observation or evidence gap instead. Re-reading a unit's entire scope to confirm its packet defeats the decomposition; accepting packets without reopening any evidence is a rubber stamp.
 
 ## Exact-revision consistency
 

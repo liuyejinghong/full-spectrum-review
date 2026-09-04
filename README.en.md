@@ -7,7 +7,7 @@
 
 Full-Spectrum Review is not another PR or diff reviewer. It enables AI agents to understand and audit an entire software system — architecture, business logic, state ownership, reliability, performance, and long-term complexity — then turn scattered symptoms into evidence-verified root causes and persistent engineering assets.
 
-**Current Core version: `v0.7.0`** · [CHANGELOG](CHANGELOG.md) · [简体中文](README.md)
+**Current Core version: `v0.8.0`** · [CHANGELOG](CHANGELOG.md) · [简体中文](README.md)
 
 ## Why this exists
 
