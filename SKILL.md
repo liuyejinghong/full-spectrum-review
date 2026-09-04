@@ -1,6 +1,6 @@
 ---
 name: full-spectrum-review
-description: Heavyweight, comprehensive, evidence-driven software audit for repositories, subsystems, PRs, commits, production-readiness, and architecture. Invoke explicitly — when the user names this skill (full-spectrum-review) or clearly asks for a comprehensive repository, system, architecture, or production-readiness audit; do not auto-trigger for ordinary, quick, or diff-only code review requests. Reconstructs requirements from first principles, audits engineering and business correctness plus operational and performance risk, applies relevant domain packs, scales large targets through bounded audit units with optional parallel workers, and persists verified findings as a prioritized, re-reviewable audit record.
+description: Comprehensive, evidence-driven software audit for repositories, subsystems, PRs, and architecture. Invoke only when explicitly named or a full audit is requested — never for ordinary, quick, or diff-only reviews.
 ---
 
 # Full-Spectrum Review
