@@ -132,6 +132,17 @@ This repository follows the Agent Skills format:
 git clone https://github.com/liuyejinghong/full-spectrum-review.git .agents/skills/full-spectrum-review
 ```
 
+## Updating
+
+The current version lives in the `VERSION` file and on the [Releases](https://github.com/liuyejinghong/full-spectrum-review/releases) page; changes are listed in the [CHANGELOG](CHANGELOG.md).
+
+```bash
+# cloned install: just pull (fetch tags too)
+git -C .agents/skills/full-spectrum-review pull && git -C .agents/skills/full-spectrum-review fetch --tags
+
+# copied install: delete and re-copy, then confirm against the VERSION file
+```
+
 See the detailed workflow and contracts in [`references/`](references/).
 
 ## Project layout

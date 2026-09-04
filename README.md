@@ -134,6 +134,17 @@ Full-Spectrum Review 将“如何审查”和“这个领域什么是真实约�
 git clone https://github.com/liuyejinghong/full-spectrum-review.git .agents/skills/full-spectrum-review
 ```
 
+## 更新
+
+当前版本见 `VERSION` 文件与 [Releases](https://github.com/liuyejinghong/full-spectrum-review/releases) 页，变更见 [CHANGELOG](CHANGELOG.md)。
+
+```bash
+# clone 安装：pull 即可（建议带上 tag）
+git -C .agents/skills/full-spectrum-review pull && git -C .agents/skills/full-spectrum-review fetch --tags
+
+# 拷贝安装：删了重拷，装完对照 VERSION 文件确认版本
+```
+
 详细规则位于 [`references/`](references/)。
 
 ## License
