@@ -7,7 +7,7 @@
 
 Full-Spectrum Review 不是又一个 PR / Diff Reviewer。它帮助 AI Agent 理解并审查完整软件系统：架构、业务逻辑、状态所有权、可靠性、性能与长期复杂度，并将局部症状收敛为经过证据验证的系统级根因，沉淀为可持续复审的工程资产。
 
-**当前 Core 版本：`v0.9.0`** · [CHANGELOG](CHANGELOG.md) · [English](README.en.md)
+**当前 Core 版本：`v0.10.0`** · [CHANGELOG](CHANGELOG.md) · [English](README.en.md)
 
 ## 为什么需要它
 
@@ -108,7 +108,7 @@ Full-Spectrum Review 将“如何审查”和“这个领域什么是真实约�
 - 分布式系统；
 - AI Agent 系统。
 
-目前唯一经过验证的 pack 是交易 pack（`domains/trading`）；新 pack 的贡献方式见 [CONTRIBUTING_PACKS.md](CONTRIBUTING_PACKS.md)。
+目前经过验证的 pack 有交易 pack（`domains/trading`）与发版 pack（`domains/deploy`）；新 pack 的贡献方式见 [CONTRIBUTING_PACKS.md](CONTRIBUTING_PACKS.md)。
 
 ## 适用场景
 

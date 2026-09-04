@@ -8,6 +8,42 @@ Domain Pack 独立版本化；例如 Trading Pack 的版本记录在 `domains/tr
 
 > 说明：下面的早期版本根据仓库实际演进整理。当前仓库尚不要求每个版本都必须已有 Git tag 或 GitHub Release；后续正式发布时可以让 tag/release 与 `VERSION` 对齐。
 
+## [deploy-pack v3] - 2026-09-04
+
+Domain Pack 独立版本化，本条目不影响 Core `0.10.0`。来源：独立渐进交付实现的收敛验证（Argo Rollouts canary/pause/abort 语义、Flagger 度量门禁自动 promotion/rollback、SRE Workbook canarying 六原则）。
+
+### Added
+
+- Domain Invariants +1：前一 artifact 在回滚窗口内必须可用（retention 短于窗口 = 回滚路径作废）。
+- Scenario Sweep +3：canary 只看聚合健康而分群服务指标分化（评估先天失明，要求按群拆分）；重叠并发 rollout（信号污染，一次只跑一个 canary）；单 artifact 打包多个可独立回退变更而无分离机制（回滚粒度丢失）。
+- 口音裁决：`Generation` 一词保留——glossary 内明确定义即脱口音，与 trading 包删除未解释用法不冲突；若真实用户产生混淆再改名。
+
+### Changed
+
+- 包头来源声明扩为三管线（事故复盘 / runbook 事实链 / 独立参考收敛），点名三家外部源。
+
+## [deploy-pack v2] - 2026-09-04
+
+Domain Pack 独立版本化，本条目不影响 Core `0.10.0`。来源：`docs/releases/` 收据层的逐事务事实（canary→rollback→永不重发链、QUALIFICATION BLOCKED 队列、second-failure 停线、平台/产品分离）。
+
+### Added
+
+- Domain Invariants +2：失败候选永久退役（下一 attempt 必须是新 source + 新身份 + 新授权，失败收据只作不可变证据）；terminal receipt 顶层必须携带决定性拒绝原因（通用 code + 原因埋 side log = 不可诊断终态，不得据此提交下一目标）。
+- Scenario Sweep +2：验收 gate 耦合无关验证导致 fail-closed 僵局（gate 按动作自身前置条件定界）；产品发版夹带部署工具升级而无独立平台验收（tooling 与产品独立版本，先验 tooling 身份再当冻结输入消费）。
+
+## [0.10.0] - 2026-09-04
+
+无规范性协议变更（additive only）。新增：deploy pack v1（独立版本化）、finding/INDEX JSON schema、自检脚本、回归网。
+
+### Added
+
+- **Deploy Domain Pack v1**（`domains/deploy/`，独立版本）。来源：AItrading 生产发版事故复盘（08-17/18 跨代 rollback 拼接、08-07 price-basis 迁移自报成功、08-21 preflight 语义身份锁死、08-03/04 与 08-20/21 发版失败链）+ 发版 runbook 的单一事实链（exact source → 一次构建 → 冻结 manifest → 单目标单事务 → terminal receipt）+ 参考实现收敛（rollback 演练、smoke 与 health 区分、digest pinning、expand/contract 迁移、flag 生命周期）。核心条款：单一不可变事实链、manifest 唯一权威、rollback generation 安全、preflight 只读、恢复复用发版路径、terminal 闭环绑定、发版不改 access/mode、canary 首败停、迁移精确性、old-running≠recovered、禁 artifact 外 live 修改。Pack 只裁决发版机制，不宣布远程现场一致性（机制 vs 现场，见 pack 内 Out of Scope）。
+- **`schemas/finding.schema.json` + `schemas/index.schema.json`**：canonical finding header 与 INDEX.json 的机校验形式。Markdown 报告仍是唯一权威产物；schema 只约束 JSON 导出与工具，不约束 prose。
+- **`scripts/validate_fsr.py`**（仅 stdlib）：版本号三处一致（VERSION/CHANGELOG/README）、markdown 围栏配平、必需文件存在、`fsr-reports/**/INDEX.json` 枚举校验。
+- **`evals/` 回归网**：召回网而非排行榜。5 个 must-catch/must-not-publish case（gate key 穷举、跨代 rollback、匿名动作、proof 缺失急救单、无历史复杂度反证下限）+ 跑法与发版门（core MINOR 前必跑，红灯挡发版）。
+
+> 动因：market 对标（Nordic hygiene 可学：schema、validator、范例；tiers/edit-mode/lens-workers 与 FSR 立场冲突不学，见讨论备忘）+ 发版面审计需求（交易系统下次审计 Deployment/operations 正式 Unit）。回归网回答"协议改动是否悄悄致盲"，不定 prose 质量分。
+
 ## [0.9.0] - 2026-09-04
 
 评审讨论驱动的硬化（issue-style 备忘见 `.omo/FSR-OPTIMIZATION-NOTES.md`，共识"不做的"两项未入：硬预算上限、通用检查单）：

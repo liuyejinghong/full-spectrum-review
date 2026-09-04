@@ -7,7 +7,7 @@
 
 Full-Spectrum Review is not another PR or diff reviewer. It enables AI agents to understand and audit an entire software system — architecture, business logic, state ownership, reliability, performance, and long-term complexity — then turn scattered symptoms into evidence-verified root causes and persistent engineering assets.
 
-**Current Core version: `v0.9.0`** · [CHANGELOG](CHANGELOG.md) · [简体中文](README.md)
+**Current Core version: `v0.10.0`** · [CHANGELOG](CHANGELOG.md) · [简体中文](README.md)
 
 ## Why this exists
 
@@ -110,7 +110,7 @@ Examples:
 
 The Core remains domain-neutral while Domain Packs provide domain-specific invariants and external semantics.
 
-The only verified pack so far is the trading pack (`domains/trading`); see [CONTRIBUTING_PACKS.md](CONTRIBUTING_PACKS.md) for contributing a new pack.
+Verified packs so far are the trading pack (`domains/trading`) and the deploy pack (`domains/deploy`); see [CONTRIBUTING_PACKS.md](CONTRIBUTING_PACKS.md) for contributing a new pack.
 
 ## Use cases
 

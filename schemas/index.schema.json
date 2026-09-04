@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/liuyejinghong/full-spectrum-review/schemas/index.schema.json",
+  "title": "Full-Spectrum Review Audit Index",
+  "description": "Machine-readable source of truth for <workspace>/fsr-reports/<target>/INDEX.json. INDEX.md is rendered from it for human reading; never hand-maintain the markdown alone.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["id", "title", "firstSeen", "priority", "status", "latestAudit"],
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "type": "string",
+        "pattern": "^FSR-[0-9]{3,}$"
+      },
+      "title": {
+        "type": "string",
+        "minLength": 4
+      },
+      "firstSeen": {
+        "type": "string",
+        "description": "Date or revision when the root cause was first recorded, e.g. 2026-09-04."
+      },
+      "priority": {
+        "type": "string",
+        "enum": ["P0", "P1", "P2", "P3"]
+      },
+      "status": {
+        "type": "string",
+        "enum": ["OPEN", "FIXED", "ACCEPTED", "SUPERSEDED", "REOPENED"]
+      },
+      "latestAudit": {
+        "type": "string",
+        "description": "Pointer to the latest report covering this ID, e.g. a report filename."
+      }
+    }
+  }
+}

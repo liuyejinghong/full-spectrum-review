@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/liuyejinghong/full-spectrum-review/schemas/finding.schema.json",
+  "title": "Full-Spectrum Review Finding",
+  "description": "Machine-readable form of the canonical finding header owned by references/finding-protocol.md. Markdown reports remain the canonical artifact; this schema validates JSON exports and tooling around them, never the prose body.",
+  "type": "object",
+  "required": ["id", "priority", "confidence", "status", "type", "area", "evidence"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^FSR-[0-9]{3,}$",
+      "description": "Stable repository-level identity. Never renumbered, never reused."
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["P0", "P1", "P2", "P3"],
+      "description": "Impact only, never confidence."
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["High", "Medium", "Low"],
+      "description": "Evidence strength for the mechanism/conclusion. Independent from priority."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["OPEN", "FIXED", "ACCEPTED", "SUPERSEDED", "REOPENED"],
+      "description": "Lifecycle status. Status changes never delete the ID."
+    },
+    "type": {
+      "type": "string",
+      "enum": ["Defect", "Business", "Reliability", "Accidental Complexity", "Performance", "Maintainability", "Security", "Test Gap"],
+      "description": "One primary type. Secondary dimensions go in area tags, not new types."
+    },
+    "area": {
+      "type": "string",
+      "minLength": 2,
+      "description": "Subsystem, flow, or boundary the finding belongs to."
+    },
+    "evidence": {
+      "type": "string",
+      "minLength": 2,
+      "description": "Concrete pointers: path:line, test, contract, history, measurement."
+    },
+    "blocking": {
+      "type": "string",
+      "enum": ["yes", "no"],
+      "description": "Only when meaningful. Never filled with a placeholder."
+    },
+    "depends-on": {
+      "type": "string",
+      "pattern": "^FSR-[0-9]{3,}$"
+    },
+    "superseded-by": {
+      "type": "string",
+      "pattern": "^FSR-[0-9]{3,}$"
+    },
+    "domain-pack": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+@[0-9]+$",
+      "description": "Pack name and version, e.g. trading@4."
+    }
+  }
+}
