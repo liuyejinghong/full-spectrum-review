@@ -1,2 +1,5 @@
 # workspace audit artifacts (fsr-reports/<target>/) — may include audits of private repos
 fsr-reports/
+
+# local discussion notes, never committed
+.omo/

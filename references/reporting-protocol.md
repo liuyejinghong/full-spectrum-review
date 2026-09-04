@@ -73,6 +73,12 @@ The canonical artifact scales with the target.
 
 Do not drop evidence discipline because the report is short, and do not force a 30-line PR into a multi-thousand-word template when concise evidence is sufficient.
 
+Sections 1–5 are the decision layer: a maintainer can approve, block, or order remediation from them alone. Sections 6+ are the repair layer. Keep the decision layer self-sufficient; never require reading every finding body to reach a verdict.
+
+## Multi-wave convergence
+
+A large target need not be covered in one session. An audit wave declares which Audit Units it covers; Units deferred to a later wave are `NOT_COVERED` with reason `deferred to next wave` — a planned state, not a failure. The ledger converges across waves: each wave binds its own revision, persists its own report under the same `<workspace>/fsr-reports/<target>/` root, and updates the same index. A full audit is the converged ledger, not a single heroic pass.
+
 ## Recommended report structure
 
 ```markdown
@@ -86,6 +92,7 @@ Do not drop evidence discipline because the report is short, and do not force a 
 - Core Skill revision when available
 - Execution mode: single-unit / sequential-units / parallel-units
 - Loaded Domain Packs + versions
+- Domain Packs considered but rejected, with a one-line reason each
 - Prior audit/index consulted
 - Important evidence limitations
 
@@ -244,9 +251,12 @@ Audit artifacts live under a fixed root relative to the current workspace — th
 
 ```text
 <workspace>/fsr-reports/<target>/INDEX.md
+<workspace>/fsr-reports/<target>/INDEX.json
 <workspace>/fsr-reports/<target>/<YYYY-MM-DD>-full-spectrum-review.md
 <workspace>/fsr-reports/<target>/pr-<number>-<short-head>-full-spectrum-review.md
 ```
+
+`INDEX.json` is the machine-readable source of truth — an array of `{id, title, firstSeen, priority, status, latestAudit}`. `INDEX.md` is rendered from it for human reading. Never hand-maintain the markdown table alone: a ledger edited in only one format drifts from the other.
 
 `<target>` is the audited repository's name (`owner/name` when disambiguation is needed). All paths are workspace-relative: never absolute paths, OS-specific locations, or temp directories — behavior stays identical across harnesses and platforms.
 
@@ -254,7 +264,7 @@ Audit artifacts live under a fixed root relative to the current workspace — th
 2. include exact reviewed revision(s);
 3. include Core Skill and loaded Domain Pack versions when available;
 4. do not overwrite a report for a different revision;
-5. update the INDEX after the report is finalized;
+5. update INDEX.json after the report is finalized and re-render INDEX.md from it;
 6. keep platform inline comments concise and secondary to the canonical report.
 
 Publishing the audit into the audited repository is a separate, explicitly authorized export (read-only audit discipline): follow an existing audit/review convention there, otherwise `docs/reviews/`, and record the published location in the workspace INDEX rather than maintaining a second mutable ledger.

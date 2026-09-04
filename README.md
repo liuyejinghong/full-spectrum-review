@@ -7,7 +7,7 @@
 
 Full-Spectrum Review 不是又一个 PR / Diff Reviewer。它帮助 AI Agent 理解并审查完整软件系统：架构、业务逻辑、状态所有权、可靠性、性能与长期复杂度，并将局部症状收敛为经过证据验证的系统级根因，沉淀为可持续复审的工程资产。
 
-**当前 Core 版本：`v0.8.0`** · [CHANGELOG](CHANGELOG.md) · [English](README.en.md)
+**当前 Core 版本：`v0.9.0`** · [CHANGELOG](CHANGELOG.md) · [English](README.en.md)
 
 ## 为什么需要它
 
@@ -86,6 +86,14 @@ Finding 使用稳定 ID、生命周期和覆盖记录保存，而不是一次聊
 - 支持 Worker 的并行审计；
 - 基于 Domain Pack 的领域审查。
 
+### 架构与阶段
+
+![FSR 审计架构](diagrams/fsr-architecture.svg)
+
+![FSR 审计阶段](diagrams/fsr-audit-flow.svg)
+
+> 图源为 `diagrams/*.mmd`（mermaid 源码），`diagrams/*.excalidraw` 可在 excalidraw.com 打开编辑。
+
 ## Domain Pack
 
 Full-Spectrum Review 将“如何审查”和“这个领域什么是真实约束”分离。
@@ -99,6 +107,8 @@ Full-Spectrum Review 将“如何审查”和“这个领域什么是真实约�
 - 支付系统；
 - 分布式系统；
 - AI Agent 系统。
+
+目前唯一经过验证的 pack 是交易 pack（`domains/trading`）；新 pack 的贡献方式见 [CONTRIBUTING_PACKS.md](CONTRIBUTING_PACKS.md)。
 
 ## 适用场景
 

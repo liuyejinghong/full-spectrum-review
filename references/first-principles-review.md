@@ -89,6 +89,8 @@ Use the evidence available in the current environment, such as:
 
 Do not require every source above. The obligation is to **seek contrary evidence**, not to mechanically run `git blame`.
 
+When git history is unavailable (snapshot, tarball, external mirror), substitute at least two of callers/consumers, configuration, and tests as the disconfirmation base. If even those cannot be established, the conclusion stays an observation/hypothesis — "no history" never upgrades it to a finding.
+
 Record the result as `Why this layer exists / Disconfirmation attempt` in the finding. If you have not meaningfully investigated the layer's reason for existence, the conclusion is an observation/hypothesis, **not a publishable Accidental Complexity finding**.
 
 Historical origin alone neither proves nor disproves necessity. Determine whether the reason that introduced the layer still corresponds to a current supported requirement.

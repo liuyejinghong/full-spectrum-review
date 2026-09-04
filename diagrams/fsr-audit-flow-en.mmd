@@ -1,0 +1,9 @@
+graph LR
+    P0["Phase 0 Planning<br/>bind revision · select Packs · ledger skeleton · Brief · define Units"]
+    P1["Phase 1 Independent discovery<br/>units blind to each other · contradictions allowed · Packets out"]
+    P2["Phase 2 Cross-boundary verification<br/>contradictions/gaps/cross-unit candidates · narrow follow-ups"]
+    P3["Phase 3 Canonical synthesis<br/>verify · disconfirm · root-cause dedup · prioritize · one report"]
+    Mode["Three equivalent modes<br/>single-unit · sequential · parallel<br/>same evidence bar · same artifact"]
+
+    P0 --> P1 --> P2 --> P3
+    Mode -.->|"concurrency only"| P1

@@ -7,7 +7,7 @@
 
 Full-Spectrum Review is not another PR or diff reviewer. It enables AI agents to understand and audit an entire software system — architecture, business logic, state ownership, reliability, performance, and long-term complexity — then turn scattered symptoms into evidence-verified root causes and persistent engineering assets.
 
-**Current Core version: `v0.8.0`** · [CHANGELOG](CHANGELOG.md) · [简体中文](README.md)
+**Current Core version: `v0.9.0`** · [CHANGELOG](CHANGELOG.md) · [简体中文](README.md)
 
 ## Why this exists
 
@@ -86,6 +86,14 @@ The framework supports:
 - parallel audit units when the harness provides workers;
 - domain-specific reasoning through Domain Packs.
 
+### Architecture and phases
+
+![FSR audit architecture](diagrams/fsr-architecture-en.svg)
+
+![FSR audit phases](diagrams/fsr-audit-flow-en.svg)
+
+> Diagram sources are `diagrams/*.mmd` (mermaid); `diagrams/*.excalidraw` files open in excalidraw.com for editing.
+
 ## Domain Packs
 
 Full-Spectrum Review separates audit methodology from domain knowledge.
@@ -101,6 +109,8 @@ Examples:
 - AI agent systems
 
 The Core remains domain-neutral while Domain Packs provide domain-specific invariants and external semantics.
+
+The only verified pack so far is the trading pack (`domains/trading`); see [CONTRIBUTING_PACKS.md](CONTRIBUTING_PACKS.md) for contributing a new pack.
 
 ## Use cases
 

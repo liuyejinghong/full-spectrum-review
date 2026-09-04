@@ -1,0 +1,9 @@
+graph LR
+    P0["Phase 0 计划<br/>绑定版本 · 选Pack · 台账骨架 · Brief · 划Unit"]
+    P1["Phase 1 独立初审<br/>各Unit互不可见 · 允许矛盾 · 出Packet"]
+    P2["Phase 2 跨界核验<br/>矛盾/断层/跨界候选 · 窄follow-up"]
+    P3["Phase 3 中央合成<br/>验证 · 反证 · 根因去重 · 定级 · 唯一报告"]
+    Mode["三档等价执行<br/>single-unit · sequential · parallel<br/>同证据条 · 同产物"]
+
+    P0 --> P1 --> P2 --> P3
+    Mode -.->|"并发度不同"| P1

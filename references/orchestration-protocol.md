@@ -240,6 +240,16 @@ Lead:
 - builds the Shared Audit Brief;
 - defines Audit Units.
 
+### Plan enumeration (closing silent omissions)
+
+The Coverage Ledger proves what was planned was covered; it cannot prove nothing material was left unplanned. Before defining Audit Units, the Lead mechanically enumerates three lists **from consuming code and contracts, not from descriptions or documentation**:
+
+- **entry points** — public APIs, CLIs, scheduled jobs, message subscriptions, webhook handlers;
+- **important mutable facts** — each must receive exactly one primary-owner unit;
+- **external boundaries** — network dependencies, persistence, operator surfaces.
+
+Every listed item is assigned an owning Audit Unit or marked `none` with an explicit reason. A listed item that is itself an enumerable set falls under `Enumerable-set completeness`. If no such item exists in some category, record none rather than manufacturing work.
+
 ### Phase 1 — Independent discovery
 
 Execute subsystem/flow units in parallel when supported and useful.
@@ -272,7 +282,7 @@ Lead:
 - updates Coverage Ledger truthfully;
 - produces one canonical report.
 
-Verification depth follows impact, and the evidence bar is redistributed, never lowered: every publishable candidate must still satisfy `finding-protocol.md`. Enumerable sets are exempt from redistribution — see `Enumerable-set completeness`; they are always verified exhaustively on correctness, money/state, or safety paths. The Lead re-opens source directly for P0/P1 candidates and for any candidate whose evidence is contested or load-bearing across units, and resolves lighter candidates through their cited references and cross-unit consistency. Never drop a candidate to save verification effort — if its evidence cannot support publication, record an observation or evidence gap instead. Re-reading a unit's entire scope to confirm its packet defeats the decomposition; accepting packets without reopening any evidence is a rubber stamp.
+Verification depth follows impact, and the evidence bar is redistributed, never lowered: every publishable candidate must still satisfy `finding-protocol.md`. Enumerable sets are exempt from redistribution — see `Enumerable-set completeness`; they are always verified exhaustively on correctness, money/state, or safety paths. The Lead re-opens source directly for P0/P1 candidates and for any candidate whose evidence is contested or load-bearing across units, and resolves lighter candidates through their cited references and cross-unit consistency. For every published P0/P1 finding, the Lead must restate the mechanism in its own words (one sentence) from reopened evidence — if it cannot, the candidate drops to an observation or evidence gap instead of a finding. Never drop a candidate to save verification effort — if its evidence cannot support publication, record an observation or evidence gap instead. Re-reading a unit's entire scope to confirm its packet defeats the decomposition; accepting packets without reopening any evidence is a rubber stamp.
 
 ## Exact-revision consistency
 

@@ -8,6 +8,25 @@ Domain Pack 独立版本化；例如 Trading Pack 的版本记录在 `domains/tr
 
 > 说明：下面的早期版本根据仓库实际演进整理。当前仓库尚不要求每个版本都必须已有 Git tag 或 GitHub Release；后续正式发布时可以让 tag/release 与 `VERSION` 对齐。
 
+## [0.9.0] - 2026-09-04
+
+评审讨论驱动的硬化（issue-style 备忘见 `.omo/FSR-OPTIMIZATION-NOTES.md`，共识"不做的"两项未入：硬预算上限、通用检查单）：
+
+### Added
+
+- **计划枚举三清单**（`orchestration-protocol.md` Phase 0）：入口点 / 重要可变事实 / 外部边界，机械枚举自消费源码，每项必有归属 Unit 或显式 `none`+原因；Coverage Ledger 防"说了没做"，本规则防"没想到"。枚举出的有界集合自动落入 v0.8.0 穷举规则。
+- **多波次收敛**（`reporting-protocol.md`）：audit wave 声明本波覆盖的 Unit；推迟项记 `NOT_COVERED`（`deferred to next wave`）为计划内状态；同一台账跨会话收敛。大库不再需要单次 heroic pass。
+- **INDEX 双轨**（`reporting-protocol.md`）：`INDEX.json` 为机器真相源，`INDEX.md` 由其渲染；禁止只手改 markdown 单边。
+- **Pack 不适用声明**（`reporting-protocol.md` Audit Metadata）：看过但判定不适用的 pack 记一行原因。
+- **报告阅读契约**（`reporting-protocol.md`）：1–5 节为决策层（可独立定级），6 节之后为修复层。
+- **Lead 复述标准**（`orchestration-protocol.md` Phase 3）：每条 P0/P1 Lead 必须用自己的话复述 mechanism（一句），写不出则降为 observation/evidence gap。卡出口，不加作业步骤。
+- **Keep-As-Is 前置引用**（`finding-protocol.md`）：Accidental Complexity 证明须引用或推翻一条 Keep-As-Is 条目（含理由），批评与保护清单挂钩。
+- **协议变更迁移规则**（`finding-protocol.md` Stable identity）：protocol 变化导致的结论变化保留 ID，记录双版本+理由；禁止发新 ID 洗白重分类。
+- **无历史替代取证下限**（`first-principles-review.md`）：无 git 历史时至少用 caller/consumer/config/test 中两源做反证基；做不到则保持 observation。"没历史"永不升级为 finding。
+- **Pack 贡献接口**（`CONTRIBUTING_PACKS.md` 新文件 + README 声明）：外部 pack 提交路径与评审门；README 明示目前唯一 verified pack 是 trading。
+
+> 动因：连续评审发现协议缺的三类东西——计划层防遗漏的机械动作（ledger 管不住"没想到"）、Lead 核验的出口标准（弱 Lead 会 rubber-stamp）、跨版本/跨会话的台账连续性（JSON 真相源、多波次收敛、ID 迁移规则）。全部按"卡出口、禁单边、不断账"收敛，未增加任何作业步骤清单。
+
 ## [0.8.0] - 2026-09-04
 
 ### Added

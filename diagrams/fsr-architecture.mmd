@@ -1,0 +1,24 @@
+graph TD
+    Lead["Lead / Coordinator<br/>FSR-ID分配 · 最终定级 · 根因去重 · 终裁 · 持久化"]
+    Lenses["推理透镜<br/>第一性原理 · 工程 · 业务 · 优化 + Domain Packs"]
+    Rules["硬约束<br/>实现只读 · 同revision · worker仅candidate权"]
+    Brief["Shared Audit Brief<br/>共享事实（逐行准入测试）"]
+    Ledger["Coverage Ledger<br/>计划对照实际覆盖"]
+    Report["Canonical Report + INDEX<br/>唯一权威报告 · 稳定ID台账"]
+    UnitA["Subsystem Unit A<br/>scope内全透镜审查"]
+    UnitB["Subsystem Unit B<br/>scope内全透镜审查"]
+    UnitX["Cross-cutting Unit<br/>边界 · 生命周期 · 资源"]
+    Packet["Reviewer Packet<br/>候选发现 · 跨界concern · Keep-As-Is · 证据缺口"]
+
+    Lenses -.->|"选Pack记入"| Brief
+    Rules -.->|"随Brief下发"| Brief
+    Lead -->|"下发"| Brief
+    Lead --> Ledger
+    Lead --> Report
+    Brief --> UnitA
+    Brief --> UnitB
+    Brief --> UnitX
+    UnitA -->|"Packet"| Packet
+    UnitB -->|"Packet"| Packet
+    UnitX -->|"Packet"| Packet
+    Packet -->|"核验 · 去重 · 定级"| Lead

@@ -1,0 +1,24 @@
+graph TD
+    Lead["Lead / Coordinator<br/>FSR-ID allocation · final priority · root-cause dedup · verdict · persistence"]
+    Lenses["Reasoning lenses<br/>first principles · engineering · business · optimization + Domain Packs"]
+    Rules["Hard constraints<br/>read-only implementation · same revision · candidate-only workers"]
+    Brief["Shared Audit Brief<br/>shared facts (line-by-line admission test)"]
+    Ledger["Coverage Ledger<br/>plan vs actual coverage"]
+    Report["Canonical Report + INDEX<br/>single authoritative report · stable ID ledger"]
+    UnitA["Subsystem Unit A<br/>all lenses within scope"]
+    UnitB["Subsystem Unit B<br/>all lenses within scope"]
+    UnitX["Cross-cutting Unit<br/>boundaries · lifecycle · resources"]
+    Packet["Reviewer Packet<br/>candidate findings · cross-boundary concerns · Keep-As-Is · evidence gaps"]
+
+    Lenses -.->|"packs recorded"| Brief
+    Rules -.->|"shipped with Brief"| Brief
+    Lead -->|"dispatch"| Brief
+    Lead --> Ledger
+    Lead --> Report
+    Brief --> UnitA
+    Brief --> UnitB
+    Brief --> UnitX
+    UnitA -->|"Packet"| Packet
+    UnitB -->|"Packet"| Packet
+    UnitX -->|"Packet"| Packet
+    Packet -->|"verify · dedup · prioritize"| Lead

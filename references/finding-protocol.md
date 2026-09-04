@@ -118,6 +118,7 @@ Finding IDs are repository-level identities, not report-local ordinal numbers.
 - Never renumber a finding because its priority or sort order changed.
 - Never reuse a retired ID for a different issue.
 - For a repository without an existing audit ledger, allocate new IDs monotonically (`FSR-001`, `FSR-002`, ...). Subsequent audits continue from the highest assigned ID.
+- When a conclusion changes because the Skill or Domain Pack protocol changed rather than the target changed, keep the ID, record both protocol versions and the reason, and change status only with that citation. Never mint a new ID to launder a protocol-driven reclassification.
 
 The report sorts by priority independently of ID.
 
@@ -178,6 +179,7 @@ Minimum sufficient mechanism
 Current mechanism
 Accidental complexity delta
 Why this layer exists / Disconfirmation attempt
+Keep-As-Is reference (the preserved-design entry this simplification cites or overturns, with reason)
 Responsibility transfer / behavior-preservation plan
 ```
 
