@@ -101,6 +101,7 @@ Coverage belongs to the revision that supplied its evidence. Before carrying a p
 ## 2. Coverage Ledger
 | Area / Flow | Depth | Status | Evidence / Notes |
 |---|---|---|---|
+| <planned area> | <depth> | <status> | <source and result; for enumerable sets, reviewed/total members and uncovered members> |
 
 ## 3. Executive Summary
 - Overall assessment
@@ -279,7 +280,9 @@ If the harness provides no writable workspace at all, return the complete report
 
 Worker packets cite source locations from their own pass; line numbers drift as the tree moves. The Lead re-opens source for every P0/P1 candidate at synthesis time (see `orchestration-protocol.md` Phase 3) and re-pins each `path:line` against the bound revision.
 
-Every published P0/P1 finding carries the verbatim mechanism snippet (a few lines, not the whole function) alongside its `path:line`. If the reopened location differs from the packet's citation, the report uses the reopened location. If a cited file moved or the lines shifted within the bound revision, the report notes the drift explicitly instead of silently keeping a stale reference. P2/P3 findings follow the same rule when their evidence is load-bearing across units; otherwise cited references plus cross-unit consistency suffice.
+Every published P0/P1 finding carries the verbatim mechanism snippet (a few lines, not the whole function) alongside its `path:line`. P2/P3 findings also carry a snippet when their evidence is load-bearing across units or a conflicting source pointer needs correction; otherwise inspected source references suffice.
+
+When a packet, prior report, or source comment points to a different location for the same mechanism, cite the actual inspected location, explicitly note the corrected pointer, and include the short mechanism excerpt. This applies at every priority. Do not preserve a stale reference as evidence, or describe unrelated working-tree movement as drift within an immutable revision.
 
 ## Completion check
 
