@@ -7,7 +7,7 @@
 
 Full-Spectrum Review 不是又一个 PR / Diff Reviewer。它帮助 AI Agent 理解并审查完整软件系统：架构、业务逻辑、状态所有权、可靠性、性能与长期复杂度，并将局部症状收敛为经过证据验证的系统级根因，沉淀为可持续复审的工程资产。
 
-**当前 Core 版本：`v0.12.0`** · [CHANGELOG](CHANGELOG.md) · [English](README.en.md)
+**当前 Core 版本：`v0.13.0`** · [CHANGELOG](CHANGELOG.md) · [English](README.en.md)
 
 ## 为什么需要它
 
@@ -133,6 +133,22 @@ Full-Spectrum Review 将“如何审查”和“这个领域什么是真实约�
 ```bash
 git clone https://github.com/liuyejinghong/full-spectrum-review.git .agents/skills/full-spectrum-review
 ```
+
+## 使用
+
+安装后，在支持 Agent Skills 的客户端中明确调用：
+
+```text
+使用 full-spectrum-review 审计当前仓库。先建立业务与架构理解，
+覆盖重要流程和边界，给出经过验证的问题、保留项及证据缺口。
+允许保存审计报告，不修改被审实现。
+```
+
+审查 PR 时给出 PR 链接或 base/head；关注子系统时明确目标路径和业务范围。
+报告包含覆盖记录、优先级、证据和建议处理顺序，默认保存到当前工作区的
+`fsr-reports/<target>/`。提交或发布报告需要另行授权。
+
+完整短输出见 [审计报告示例](references/example-report.md)。
 
 ## 更新
 

@@ -1,10 +1,10 @@
-# Case 03 — Anonymous irreversible action (trading pack)
+# Risk-triggered position close
 
-Seeded defect: `orders.py` flattens the position on risk signal with no
-durable identity minted before POST. Fills cannot be attributed to the
-intent that caused them, and the obligation cannot be closed.
+The risk handler requests closure of a managed position. Operations must be
+able to associate each submitted action and its later fills with the position
+and trade that caused it, including after restart. The venue assigns an order
+ID on acceptance; acceptance and later execution are separate events.
 
-Packs to load: trading.
-
-MUST-CATCH: a finding demanding a durable identity bound to the served
-position/trade, minted before POST.
+Domain Packs: trading. This is a source excerpt without git history. The
+external `venue` library is outside the snapshot; inspect the caller contract,
+not the availability of that dependency.

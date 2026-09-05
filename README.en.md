@@ -7,7 +7,7 @@
 
 Full-Spectrum Review is not another PR or diff reviewer. It enables AI agents to understand and audit an entire software system — architecture, business logic, state ownership, reliability, performance, and long-term complexity — then turn scattered symptoms into evidence-verified root causes and persistent engineering assets.
 
-**Current Core version: `v0.12.0`** · [CHANGELOG](CHANGELOG.md) · [简体中文](README.md)
+**Current Core version: `v0.13.0`** · [CHANGELOG](CHANGELOG.md) · [简体中文](README.md)
 
 ## Why this exists
 
@@ -131,6 +131,24 @@ This repository follows the Agent Skills format:
 ```bash
 git clone https://github.com/liuyejinghong/full-spectrum-review.git .agents/skills/full-spectrum-review
 ```
+
+## Usage
+
+After installation, invoke the skill explicitly in an Agent Skills-compatible client:
+
+```text
+Use full-spectrum-review to audit this repository. Reconstruct its business
+and architecture, cover important flows and boundaries, and report verified
+findings, preserved decisions, and evidence gaps. Save audit artifacts;
+do not modify the audited implementation.
+```
+
+For a PR, supply its URL or base/head. For a subsystem, name its paths and
+business scope. The report includes coverage, priority, evidence, and remediation
+order, saved under the current workspace's `fsr-reports/<target>/` when authorized.
+Committing or publishing reports requires separate authorization.
+
+See the [complete compact report example](references/example-report.md).
 
 ## Updating
 

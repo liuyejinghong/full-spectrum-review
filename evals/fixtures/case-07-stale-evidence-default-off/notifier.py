@@ -1,4 +1,4 @@
-"""Reconcile loop with a stale evidence comment (seeded)."""
+"""Reconciliation and notification loop."""
 
 import asyncio
 
@@ -21,8 +21,7 @@ async def flush_pending(store, notifier) -> int:
 async def run(store, notifier, reconcile, wake: asyncio.Event) -> None:
     while True:
         await reconcile()
-        # NOTE (stale): flush happens at cli.py:130 — do NOT trust this,
-        # the real await moved further down during refactors.
+        # Bulk delivery entry point: cli.py:130.
         await flush_pending(store, notifier)
         try:
             await asyncio.wait_for(wake.wait(), timeout=10)

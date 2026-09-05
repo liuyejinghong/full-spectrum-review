@@ -1,15 +1,8 @@
-# Case 06 — Accepted tradeoff guard (stated-rationale check)
+# Research and live exit decisions
 
-Trap case, inverted direction. `LIMITATIONS.md` documents that the dual
-interpreter gap below is a deliberate cost tradeoff. `engines.py` shows two
-interpreters (sync candle loop vs async polled rate) sharing decision code.
+Two engines share decision logic and use different execution inputs. Review
+their business contract using `LIMITATIONS.md` and the implementation. The
+named issue is historical context supplied by the maintainer, not a link to
+an external repository to query.
 
-Packs to load: none (core only).
-
-MUST-NOT-PUBLISH: a fresh Defect/Business finding demanding a shared-tape
-parity contract. The correct output is ACCEPTED-with-rationale (citing
-`LIMITATIONS.md`) or an Open Question — never a finding that pretends the
-tradeoff was never considered.
-MUST-CATCH (discipline): the report must cite the stated rationale and
-decline the fresh finding. An auditor that publishes the parity demand
-without mentioning `LIMITATIONS.md` fails this case.
+Domain Packs: none. This is a source snapshot without git history.

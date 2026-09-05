@@ -19,6 +19,7 @@
       },
       "firstSeen": {
         "type": "string",
+        "minLength": 1,
         "description": "Date or revision when the root cause was first recorded, e.g. 2026-09-04."
       },
       "priority": {
@@ -31,6 +32,7 @@
       },
       "latestAudit": {
         "type": "string",
+        "minLength": 1,
         "description": "Pointer to the latest report covering this ID, e.g. a report filename."
       }
     }

@@ -6,8 +6,9 @@ Checks:
      == vX.Y.Z strings in README.md / README.en.md.
   2. Markdown fence balance (``` count even) in every .md file.
   3. Required skill files exist.
-  4. Any fsr-reports/**/INDEX.json validates against schemas/index.schema.json
-     (hand-rolled: id pattern, priority/confidence/status enums, required keys).
+  4. Any fsr-reports/**/INDEX.json satisfies the index schema's string fields,
+     required/exact keys, enums, patterns, and minimum lengths; IDs are unique.
+     This is an index-specific check, not a general JSON Schema validator.
   5. Every domains/*/DOMAIN.md frontmatter carries version + last-verified.
   6. evals fixture case count matches the N/N expectation in REGRESSION.md.
 
@@ -36,11 +37,6 @@ REQUIRED = [
     "schemas/index.schema.json",
 ]
 
-ID_RE = re.compile(r"^FSR-[0-9]{3,}$")
-PRIORITIES = {"P0", "P1", "P2", "P3"}
-STATUSES = {"OPEN", "FIXED", "ACCEPTED", "SUPERSEDED", "REOPENED"}
-INDEX_KEYS = {"id", "title", "firstSeen", "priority", "status", "latestAudit"}
-
 errors: list[str] = []
 
 
@@ -49,11 +45,51 @@ def fail(msg: str) -> None:
     print(f"FAIL: {msg}")
 
 
+def index_errors(entries, schema) -> list[str]:
+    """Validate ledger records using the constraints owned by the index schema."""
+    if not isinstance(entries, list):
+        return ["top level must be an array"]
+    problems = []
+    item = schema["items"]
+    fields = item["properties"]
+    required = set(item["required"])
+    seen = set()
+    for i, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            problems.append(f"[{i}]: entry must be an object")
+            continue
+        if required - entry.keys() or (not item["additionalProperties"] and entry.keys() - fields.keys()):
+            problems.append(f"[{i}]: keys must be exactly {sorted(fields)}")
+            continue
+        for name, rule in fields.items():
+            if name not in entry:
+                continue
+            value = entry[name]
+            where = f"[{i}].{name}"
+            if not isinstance(value, str):
+                problems.append(f"{where}: must be a string")
+                continue
+            if len(value) < rule.get("minLength", 0):
+                problems.append(f"{where}: minimum length is {rule['minLength']}")
+            if "enum" in rule and value not in rule["enum"]:
+                problems.append(f"{where}: invalid value {value!r}")
+            if "pattern" in rule and not re.search(rule["pattern"], value):
+                problems.append(f"{where}: invalid format {value!r}")
+        identity = entry.get("id")
+        if isinstance(identity, str):
+            if identity in seen:
+                problems.append(f"[{i}]: duplicate id {identity}")
+            seen.add(identity)
+    return problems
+
+
 def main() -> int:
     # 1. required files
     for rel in REQUIRED:
         if not (ROOT / rel).is_file():
             fail(f"missing required file: {rel}")
+    if errors:
+        return 1
 
     # 2. version consistency
     version = (ROOT / "VERSION").read_text().strip()
@@ -77,33 +113,15 @@ def main() -> int:
             fail(f"unbalanced fences in {md.relative_to(ROOT)} ({n})")
 
     # 4. INDEX.json validation
+    index_schema = json.loads((ROOT / "schemas/index.schema.json").read_text())
     for idx in sorted((ROOT / "fsr-reports").rglob("INDEX.json")) if (ROOT / "fsr-reports").is_dir() else []:
         try:
             entries = json.loads(idx.read_text())
         except json.JSONDecodeError as e:
             fail(f"{idx.relative_to(ROOT)}: invalid JSON ({e})")
             continue
-        if not isinstance(entries, list):
-            fail(f"{idx.relative_to(ROOT)}: top level must be an array")
-            continue
-        seen: set[str] = set()
-        for i, e in enumerate(entries):
-            where = f"{idx.relative_to(ROOT)}[{i}]"
-            if not isinstance(e, dict) or set(e) != INDEX_KEYS:
-                fail(f"{where}: keys must be exactly {sorted(INDEX_KEYS)}")
-                continue
-            if not ID_RE.match(e["id"]):
-                fail(f"{where}: bad id {e['id']!r}")
-            if e["id"] in seen:
-                fail(f"{where}: duplicate id {e['id']}")
-            seen.add(e["id"])
-            if e["priority"] not in PRIORITIES:
-                fail(f"{where}: bad priority {e['priority']!r}")
-            if e["status"] not in STATUSES:
-                fail(f"{where}: bad status {e['status']!r}")
-            for k in ("title", "firstSeen", "latestAudit"):
-                if not isinstance(e[k], str) or not e[k].strip():
-                    fail(f"{where}: {k} must be a non-empty string")
+        for problem in index_errors(entries, index_schema):
+            fail(f"{idx.relative_to(ROOT)}{problem}")
 
     # 5. DOMAIN.md frontmatter: version + last-verified
     for domain_md in sorted((ROOT / "domains").glob("*/DOMAIN.md")) if (ROOT / "domains").is_dir() else []:

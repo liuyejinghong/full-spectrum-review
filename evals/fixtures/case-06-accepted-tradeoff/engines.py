@@ -1,4 +1,4 @@
-"""Dual interpreters sharing decision code (see LIMITATIONS.md before proposing changes)."""
+"""Research and live exit decisions."""
 
 
 def should_exit(position, signal, stop_hit):

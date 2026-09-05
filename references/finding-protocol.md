@@ -58,7 +58,9 @@ No disconfirmation attempt → no Accidental Complexity finding. Keep it as an o
 
 ## Stated-rationale check for improvement-type findings
 
-A finding that proposes new machinery — new tests, new contracts, new mechanisms, new fixtures — must first check the maintainer's stated rationale: docs limitations sections, ADRs, and the issue tracker for a prior position on exactly this proposal. A documented rejection or accepted tradeoff (cost, scope, philosophy) turns the candidate into `ACCEPTED`-with-rationale or an Open Question, never a fresh finding. Absence of any prior position changes nothing: proceed on evidence. This is disconfirmation generalized from "why does this layer exist" to "why doesn't this thing exist" — same exit discipline, no new workflow.
+A finding that proposes new machinery — new tests, contracts, mechanisms, or fixtures — must first check available maintainer rationale in limitations, ADRs, and prior issue discussion about that proposal. If the same facts, consequences, and cost assumptions still hold, preserve the accepted tradeoff with its rationale instead of publishing the same demand as a fresh finding.
+
+A rejected solution is not acceptance of every consequence of the underlying problem. New evidence, changed requirements or exposure, or a materially cheaper sufficient remedy warrants reassessment. Explain what changed; reuse the existing finding ID and use `REOPENED` when a previously accepted issue is current again. If intent remains unresolved, use an Open Question. Absence of a prior position changes nothing: proceed on evidence.
 
 ## Root-cause deduplication
 
@@ -100,7 +102,9 @@ Priority stays impact-only, but impact must be stated against the finding's real
 
 Record exposure in the conditional `Blast` header field (see Canonical schema): `live-active`, `tool-active`, `research-default-on`, `research-default-off`, `paused`, or `unknown`. Record measurement basis in `Frequency`: `measured` or `inferred`.
 
-P1 requires all three: an active exposure (`live-active`, `tool-active`, or `research-default-on`), a reachable production/money/state/recovery path, and a realistic trigger. A `research-default-off` mechanism, a `paused` route, or a code-only mechanism with no field/frequency evidence caps at P2 unless live reachability with money/state impact is separately demonstrated. Unquantified financial impact stays unknown — never conclude "no loss" from a single fill, and never conclude "production is bleeding" from a code path alone.
+Apply the priority model to the credible consequence and exposure of the supported scenario under review, including normal activation, upgrade, and deployment of a proposed change. P1 does not require a prior production incident, measured frequency, or a money path: a directly established security, data-loss, or major availability defect may qualify before deployment.
+
+Default-off or paused code is not evidence of active production impact. Establish whether and how the supported target can activate the path; state the resulting scope and bounded consequence. Missing frequency measurements remain unknown or `inferred`, not an automatic priority cap. An unverified fact essential to the mechanism limits confidence or publication, while an unknown incident count does not weaken a mechanism already proved. Unquantified financial impact stays unknown — never conclude "no loss" from a single fill, or "production is bleeding" from code alone.
 
 ## Confidence model
 

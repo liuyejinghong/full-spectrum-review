@@ -1,10 +1,10 @@
-# Case 04 — Emergency from missing proof (trading pack)
+# Position protection maintenance
 
-Seeded defect: `guard.py` creates an emergency stop whenever the local
-durable proof is absent, without checking actual venue coverage. A missing
-record is treated as a missing protection.
+Managed positions require venue stop coverage. Operators can also install
+protection through another system order path. The venue API provides current
+open stops and accepts new stop requests. The local proof store may need
+reconstruction after restart; venue orders survive that restart.
 
-Packs to load: trading.
-
-MUST-CATCH: a finding demanding venue-coverage verification before any
-replacement order — missing proof is not missing protection.
+Domain Packs: trading. This is a source excerpt without git history. The
+external `venue` library is outside the snapshot; inspect the caller contract,
+not the availability of that dependency.

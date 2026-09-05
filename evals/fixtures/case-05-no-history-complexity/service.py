@@ -1,12 +1,7 @@
-"""Submission pipeline with layered reliability machinery.
-
-Each layer below was added for a reason recorded OUTSIDE this snapshot
-(history/ADRs not provided). Judge necessity only after investigating
-callers, configuration, and tests — never from shape alone.
-"""
+"""Submission pipeline; helper implementations omitted from this excerpt."""
 
 from config import RETRYABLE_ERRORS, FALLBACK_REGION, WATCHDOG_INTERVAL
-from callers import submit_entry
+from transport import submit_entry
 
 
 def submit(payload: dict) -> dict:

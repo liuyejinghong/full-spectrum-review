@@ -10,8 +10,6 @@ def has_proof(position_id: str) -> bool:
 
 
 def ensure_protected(position) -> dict:
-    # BUG: proof absence is equated with protection absence.
-    # No venue coverage check before the emergency POST.
     if not has_proof(position.id):
         receipt = venue.post_stop_order(
             symbol=position.symbol,

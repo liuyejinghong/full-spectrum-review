@@ -2,7 +2,7 @@
 
 This is a **format/mechanism example**, not a finding about this repository. It demonstrates how a high-impact Accidental Complexity finding should satisfy the canonical protocol without relying on "looks over-engineered" judgment.
 
-```markdown
+````markdown
 ### FSR-042 — Duplicate order-recovery owners create avoidable state divergence
 
 ID: FSR-042
@@ -74,7 +74,7 @@ Make the durable unresolved-intent/reconciliation component the sole owner. Conv
 **Verification**
 
 Exercise full fill, partial fill, timeout-with-accepted-order, confirmed rejection, crash before/after local persistence, websocket gap, restart, and duplicate client identifier. Assert that one logical intent never produces duplicate unintended exposure and that unresolved state always converges.
-```
+````
 
 ## Why this example passes the bar
 

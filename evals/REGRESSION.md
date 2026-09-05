@@ -4,21 +4,33 @@ A recall net for the audit protocol, not a quality leaderboard.
 
 Open reasoning (Accidental Complexity, Business) cannot be graded
 deterministically, so this net asserts **must-catch recall** on seeded
-defects plus **must-not-publish** discipline on one trap case. It answers
+defects plus **must-not-publish** discipline on trap cases. It answers
 one question before every core release: *did the latest protocol change
 quietly blind the auditor?*
 
 ## Procedure
 
-For each case under `fixtures/case-*`:
+Auditor inputs live in `fixtures/case-*`; runner/judge answers live in
+`expectations/<case>.md`. Never expose expectations or this runner document
+to the auditor. Fixture READMEs contain only target context and pack selection.
 
-1. Run a full-spectrum audit in **single-unit** mode on the fixture
-   directory, loading the packs named in the case README.
-2. Present `case-*/README.md`'s history situation exactly as stated
-   (case-05 is a snapshot **without** git history — do not invent any).
-3. Collect published findings (P0–P3 only; observations do not count
-   except where the case demands their absence/presence).
-4. Assert the case's `MUST-CATCH` / `MUST-NOT-PUBLISH` lines.
+1. Prepare a clean workspace outside this repository. Copy only `SKILL.md`,
+   `VERSION`, `references/`, and `domains/` as the skill, and the contents of
+   each fixture into a neutrally named target directory. Do not copy git
+   history, expectations, or prior audit reports. Some fixtures are explicit
+   source excerpts with omitted dependencies; respect their stated scope.
+2. Start an auditor in a fresh context that has not seen the answers or this
+   change's design discussion. Run a **single-unit** audit of each target,
+   loading the packs named in its README. Multiple cases may share that fresh
+   run, but each target gets its own coverage and report. Record whether cases
+   shared context; do not present such a run as independent per-case trials.
+3. Save the auditor's reports before opening expectations. Collect published
+   findings (P0–P3 only; observations count only where the expectation says so).
+4. The runner compares each report with its separate expectation. Judge the
+   mechanism and consequence, not keyword repetition or finding count. Record
+   case results, auditor/model when available, protocol revision or working-tree
+   state, and evidence references. A reread by an auditor already exposed to
+   answers is a consistency check, not a blind recall run.
 
 ## Pass criteria
 
@@ -41,3 +53,5 @@ the evidence standard).
   matching but may not lower the bar to pass.
 - Fixtures are minimal by design — a protocol that needs a 10k-line
   repo to catch a seeded defect is already failing.
+- The repository self-check checks fixture counts, not audit outcomes. Its
+  success does not establish that these cases passed.

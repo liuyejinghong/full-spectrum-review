@@ -92,12 +92,12 @@ Some mechanisms fail as a set: a gate, allowlist, key table, parameter registry,
 When an Audit Unit encounters an enumerable set — any bounded collection whose members each carry independent correctness, safety, or business meaning — it must:
 
 1. enumerate every member from the source of truth (the code or contract that consumes the set, not a comment or document that describes it);
-2. classify each member: `must-govern` (impacts correctness/safety/economics and is human-adjustable), `covered-elsewhere` (governed by another mechanism such as a receipt hash, with the covering mechanism named), or `remove-or-fix` (dead, illusory, or misrepresenting configuration);
+2. record each member's expected contract and the evidence for its actual behavior. Use the set's own semantics: parameter tables need governance coverage; state×event matrices need allowed/forbidden transitions and outcomes; routes need permitted principals and authorization behavior. Name another governing mechanism when it supplies the evidence. Do not force all sets into configuration-governance categories;
 3. report members it could not classify as evidence gaps, never as implicit passes.
 
 Typical enumerable sets include: gate/allowlist key tables and their producer-side field lists; duplicated mapping tables that must agree with each other; receipt `allowed diff` lists; lifecycle states×events; business operations×recovery paths; mode pairs×population-defining assumptions (for example fees, funding, or slippage); route×auth decisions; release phases×test coverage. These are mechanism classes, not a checklist of named artifacts: if no such set exists on the audited paths, the rule is vacuously satisfied — record none rather than manufacturing work.
 
-A Reviewer Packet carries the member inventory (or a reference to a recoverable artifact holding it) with per-member classification. The Lead re-opens source for any enumerable set on a correctness, money/state, or safety path regardless of the unit's planned depth — `sampled` is never sufficient for these sets.
+A Reviewer Packet carries the member inventory (or a reference to a recoverable artifact holding it) with per-member results. For product sets, distinguish supported combinations from combinations excluded by an established contract; do not manufacture unreachable scenarios. The Lead re-opens source for any enumerable set on a correctness, money/state, or safety path regardless of the unit's planned depth — `sampled` is never sufficient for these sets.
 
 ## Lead / Coordinator responsibilities
 
@@ -224,7 +224,7 @@ This prevents several workers from publishing multiple symptoms of one root caus
 
 The Lead must not impose constraints on workers narrower than what the harness and the user grant — for example, banning network access or forbidding test execution. The standing constraints are exactly three: read-only discipline toward the audited implementation, candidate-only authority, and exact-revision binding.
 
-Workers are expected to run the target's tests, benchmarks, and reproducible experiments as evidence, sandboxing side effects outside the audited tree or cleaning ephemeral artifacts. If the harness itself lacks a capability, record it as an evidence gap with its confidence impact — do not adopt the limitation as a chosen constraint.
+Workers select tests, benchmarks, and reproducible experiments to resolve concrete uncertainty under the read-only discipline in `SKILL.md`. Availability alone does not require running a check. If a needed capability is unavailable, record the missing evidence and identify the conclusions it limits.
 
 ## Multi-phase execution
 
@@ -239,7 +239,7 @@ Lead:
 - creates the Coverage Ledger skeleton;
 - builds the Shared Audit Brief;
 - defines Audit Units.
-- probes test-execution capability (toolchain, dependencies, network); if tests cannot run, records it once as a wave-level evidence limitation that caps confidence wave-wide instead of repeating it per finding.
+- establishes test-execution capability when execution is needed to settle a live question (toolchain, dependencies, network). Record shared limitations once; limit confidence only for conclusions that depend on the unavailable evidence. A missing test environment does not weaken an independently established mechanism.
 
 ### Plan enumeration (closing silent omissions)
 

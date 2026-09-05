@@ -79,6 +79,8 @@ Sections 1–5 are the decision layer: a maintainer can approve, block, or order
 
 A large target need not be covered in one session. An audit wave declares which Audit Units it covers; Units deferred to a later wave are `NOT_COVERED` with reason `deferred to next wave` — a planned state, not a failure. The ledger converges across waves: each wave binds its own revision, persists its own report under the same `<workspace>/fsr-reports/<target>/` root, and updates the same index. A full audit is the converged ledger, not a single heroic pass.
 
+Coverage belongs to the revision that supplied its evidence. Before carrying a prior unit's coverage into a newer revision, review intervening changes to that unit and its relevant contracts, callers, configuration, and boundaries. Unaffected coverage may carry forward with the prior revision and the basis for reuse recorded; re-review affected behavior. Until then, show its current coverage as `PARTIAL` or `NOT_COVERED`, retaining the old result as historical evidence. Completed rows from different revisions alone do not establish a complete audit of the current target.
+
 ## Recommended report structure
 
 ```markdown
@@ -252,7 +254,7 @@ Audit artifacts live under a fixed root relative to the current workspace — th
 ```text
 <workspace>/fsr-reports/<target>/INDEX.md
 <workspace>/fsr-reports/<target>/INDEX.json
-<workspace>/fsr-reports/<target>/<YYYY-MM-DD>-full-spectrum-review.md
+<workspace>/fsr-reports/<target>/<YYYY-MM-DD>-<short-revision>-full-spectrum-review.md
 <workspace>/fsr-reports/<target>/pr-<number>-<short-head>-full-spectrum-review.md
 ```
 
@@ -268,6 +270,8 @@ Audit artifacts live under a fixed root relative to the current workspace — th
 6. keep platform inline comments concise and secondary to the canonical report.
 
 Publishing the audit into the audited repository is a separate, explicitly authorized export (read-only audit discipline): follow an existing audit/review convention there, otherwise `docs/reviews/`, and record the published location in the workspace INDEX rather than maintaining a second mutable ledger.
+
+When the session workspace is the audited repository itself, writing the working `fsr-reports/` artifacts is covered by audit-artifact write authorization; it is not an export. Committing or publishing those artifacts still requires explicit authorization. Without a revision, use a distinct report name that preserves earlier reports.
 
 If the harness provides no writable workspace at all, return the complete report and the index delta the maintainer would need to persist.
 
