@@ -280,9 +280,9 @@ If the harness provides no writable workspace at all, return the complete report
 
 Worker packets cite source locations from their own pass; line numbers drift as the tree moves. The Lead re-opens source for every P0/P1 candidate at synthesis time (see `orchestration-protocol.md` Phase 3) and re-pins each `path:line` against the bound revision.
 
-Every published P0/P1 finding carries the verbatim mechanism snippet (a few lines, not the whole function) alongside its `path:line`. P2/P3 findings also carry a snippet when their evidence is load-bearing across units or a conflicting source pointer needs correction; otherwise inspected source references suffice.
+Every published P0/P1 finding carries the verbatim mechanism snippet (a few lines, not the whole function) alongside its `path:line`. P2/P3 findings also carry a snippet when their evidence is load-bearing across units; otherwise inspected source references suffice.
 
-When a packet, prior report, or source comment points to a different location for the same mechanism, cite the actual inspected location, explicitly note the corrected pointer, and include the short mechanism excerpt. This applies at every priority. Do not preserve a stale reference as evidence, or describe unrelated working-tree movement as drift within an immutable revision.
+If a finding revises a citation inherited from a prior report or packet, cite the actual inspected location and note the correction. Source comments are not location authority: verify the mechanism at the cited source. An unrelated stale comment need not be repeated in the report when the finding already cites the correct code. Do not describe working-tree movement as drift within an immutable revision.
 
 ## Completion check
 
