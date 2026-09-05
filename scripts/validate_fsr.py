@@ -8,6 +8,8 @@ Checks:
   3. Required skill files exist.
   4. Any fsr-reports/**/INDEX.json validates against schemas/index.schema.json
      (hand-rolled: id pattern, priority/confidence/status enums, required keys).
+  5. Every domains/*/DOMAIN.md frontmatter carries version + last-verified.
+  6. evals fixture case count matches the N/N expectation in REGRESSION.md.
 
 Usage: python3 scripts/validate_fsr.py [--root <repo>]
 Exit 0 when clean, 1 otherwise.
@@ -103,10 +105,31 @@ def main() -> int:
                 if not isinstance(e[k], str) or not e[k].strip():
                     fail(f"{where}: {k} must be a non-empty string")
 
+    # 5. DOMAIN.md frontmatter: version + last-verified
+    for domain_md in sorted((ROOT / "domains").glob("*/DOMAIN.md")) if (ROOT / "domains").is_dir() else []:
+        text = domain_md.read_text()
+        if not re.search(r"^version:\s*\d+", text, re.M):
+            fail(f"{domain_md.relative_to(ROOT)}: frontmatter missing version")
+        if not re.search(r"^last-verified:\s*\d{4}-\d{2}-\d{2}", text, re.M):
+            fail(f"{domain_md.relative_to(ROOT)}: frontmatter missing last-verified (YYYY-MM-DD)")
+
+    # 6. evals case count matches REGRESSION.md expectation
+    reg = ROOT / "evals" / "REGRESSION.md"
+    fixtures = ROOT / "evals" / "fixtures"
+    if reg.is_file() and fixtures.is_dir():
+        m = re.search(r"(\d+)/(\d+) cases green", reg.read_text())
+        cases = sorted(p for p in fixtures.iterdir() if p.is_dir() and p.name.startswith("case-"))
+        if not m:
+            fail("evals/REGRESSION.md has no N/N cases-green expectation")
+        elif int(m.group(1)) != int(m.group(2)):
+            fail(f"evals/REGRESSION.md expects {m.group(1)}/{m.group(2)} (unbalanced)")
+        elif int(m.group(1)) != len(cases):
+            fail(f"evals/REGRESSION.md expects {m.group(1)} cases but found {len(cases)} fixtures")
+
     if errors:
         print(f"\n{len(errors)} problem(s).")
         return 1
-    print("OK: versions consistent, fences balanced, required files present, INDEX.json valid.")
+    print("OK: versions consistent, fences balanced, required files present, INDEX.json valid, packs versioned, evals count matches.")
     return 0
 
 

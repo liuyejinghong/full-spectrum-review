@@ -26,6 +26,8 @@ What concrete consequence follows? Valid impact includes correctness/business fa
 
 Can the supported product/environment reach the scenario or incur the stated cost? Reachable edge cases count; merely constructible theoretical states do not.
 
+State frequency as **measured** (field evidence, logs, queue lengths, latency samples) or **inferred** (code-path analysis only). A mechanism established code-only without any field/frequency measurement must say so explicitly; it must not borrow certainty from an unrelated passing test or from a different deployment's traffic.
+
 ### Scope
 
 Why is the issue relevant to the audited target?
@@ -92,6 +94,14 @@ Priority communicates **impact**, not reviewer confidence.
 
 Do not manufacture P3 findings to make a review look busy. Do not inflate aesthetic cleanup into P1/P2.
 
+## Exposure and frequency discipline
+
+Priority stays impact-only, but impact must be stated against the finding's real exposure, never against the mere existence of money somewhere in the system.
+
+Record exposure in the conditional `Blast` header field (see Canonical schema): `live-active`, `tool-active`, `research-default-on`, `research-default-off`, `paused`, or `unknown`. Record measurement basis in `Frequency`: `measured` or `inferred`.
+
+P1 requires all three: an active exposure (`live-active`, `tool-active`, or `research-default-on`), a reachable production/money/state/recovery path, and a realistic trigger. A `research-default-off` mechanism, a `paused` route, or a code-only mechanism with no field/frequency evidence caps at P2 unless live reachability with money/state impact is separately demonstrated. Unquantified financial impact stays unknown — never conclude "no loss" from a single fill, and never conclude "production is bleeding" from a code path alone.
+
 ## Confidence model
 
 Confidence communicates how strongly the available evidence supports the mechanism/conclusion:
@@ -147,6 +157,8 @@ Blocking: yes | no
 Depends-on: FSR-...
 Superseded-by: FSR-...
 Domain-Pack: <name@version>
+Blast: live-active | tool-active | research-default-on | research-default-off | paused | unknown
+Frequency: measured | inferred
 ```
 
 Do not fill optional fields with repetitive `none` values.

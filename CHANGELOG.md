@@ -8,6 +8,19 @@ Domain Pack 独立版本化；例如 Trading Pack 的版本记录在 `domains/tr
 
 > 说明：下面的早期版本根据仓库实际演进整理。当前仓库尚不要求每个版本都必须已有 Git tag 或 GitHub Release；后续正式发布时可以让 tag/release 与 `VERSION` 对齐。
 
+## [0.12.0] - 2026-09-05
+
+小优化（additive only，core 三处加段 + schema 两可选字段 + trading 包两条 invariant + 1 个回归 case + 自检两项）。来源：2026-09-05 AItrading 全量审计的独立复核（10/10 CONFIRMED，但发现三类协议漏：行号引用漂移、默认关闭/暂停路径的 P 级通胀、收据时间声明与真实 wire 语义脱节）。
+
+### Added
+
+- **Exposure / Frequency 纪律**（`finding-protocol.md`）：conditional header 加 `Blast`（live-active / tool-active / research-default-on / research-default-off / paused / unknown）与 `Frequency`（measured / inferred）；P1 需同时满足 active exposure + 可达生产/资金/状态路径 + 真实触发，默认关闭/暂停/无现场量测封顶 P2；Reachability 必须声明 measured 还是 inferred。
+- **证据钉死**（`reporting-protocol.md`）：P0/P1 必须带原文 mechanism 片段 + 在 bound revision 上重开源码重钉 `path:line`，漂移显式注明；Skill 经 git 安装时用 `git rev-parse HEAD` 取 revision，取不到记 `revision: unavailable` + 原因。
+- **Schema 两可选字段**（`schemas/finding.schema.json`）：`blast` / `frequency` 枚举，JSON 导出与工具可用，prose 仍是唯一权威。
+- **Trading 包 v4→v5**：Backtest parity 加 bar 时间口径端到端可追溯（ingest→wire→engine→receipt 四时区分，signal 腿 validator 不能证明 execution 腿）；Notification 加调度双向独立与 wake 合并显式化。
+- **evals case-07**（stale-evidence-default-off guard）：陈旧行号复述与默认关闭 P1 通胀双陷阱；`REGRESSION.md` 通过线 6/6→7/7。
+- **自检两项**（`scripts/validate_fsr.py`，仅 stdlib）：`domains/*/DOMAIN.md` frontmatter 必带 version + last-verified；evals 夹具数必须等于 REGRESSION 期望数。
+
 ## [0.11.0] - 2026-09-04
 
 小优化（additive only，两条协议各加几行 + 1 个回归 case）。来源：freqtrade 首审的 #13529 教训（parity 缺口是已知权衡，却被当 fresh finding 发布）。

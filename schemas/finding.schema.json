@@ -59,6 +59,16 @@
       "type": "string",
       "pattern": "^[a-z0-9-]+@[0-9]+$",
       "description": "Pack name and version, e.g. trading@4."
+    },
+    "blast": {
+      "type": "string",
+      "enum": ["live-active", "tool-active", "research-default-on", "research-default-off", "paused", "unknown"],
+      "description": "Real exposure the impact was stated against. Optional; never filled with a placeholder."
+    },
+    "frequency": {
+      "type": "string",
+      "enum": ["measured", "inferred"],
+      "description": "Whether the trigger frequency rests on field evidence or code-path analysis. Optional."
     }
   }
 }

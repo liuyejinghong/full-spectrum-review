@@ -1,13 +1,13 @@
 ---
 domain: trading
-version: 4
+version: 5
 applies-when:
   - system consumes market data or generates trading signals
   - system submits, manages, cancels, reconciles, or accounts for orders and positions
   - system performs backtest, simulation, paper trading, or live trading
   - system manages real-money trading risk or operator takeover
 extends: core
-last-verified: 2026-09-02
+last-verified: 2026-09-05
 ---
 
 # Trading Domain Pack
@@ -209,6 +209,7 @@ Compare semantics, not merely code reuse:
 - live orders are asynchronous while backtest orders complete synchronously — verify code shared between both modes does not assume synchronous fills;
 - identical limit orders fill differently in live by queue position — live-vs-backtest comparisons must attribute divergence to fill assumptions, not only to signals;
 - composition tests run against a deterministic simulated venue (injectable clock and network, adversarial fills/cancels/rejects) rather than hand-written fakes; leading practice is continuous randomized testing against the deterministic simulator — unit-green components have repeatedly failed at first real composition.
+- bar timestamp conventions are traced end to end (ingest loader → wire/parquet → engine input → receipt claim): raw open time, bar close/available time, signal decision time, and fill event time stay distinct, and the receipt's declared convention matches the actual execution-leg wire — a validator or reference-key contract that only covers the signal leg never proves the execution leg's time meaning.
 
 A backtest can be internally correct yet business-invalid if it assumes information or executions unavailable live.
 
@@ -258,6 +259,7 @@ Trading systems fail through their observability as much as their order paths �
 - classification derives from persisted machine codes that survive system boundaries; downstream components never parse display text or subjects for semantics — a breakeven stop rendered as a "hard stop" (or the reverse) misprices incident severity during live trading;
 - incident identity is a stable typed root plus dimensions — no display strings, batch counts, or time buckets; recovery fires only when all contributing producers recover, so a repeated protection failure is not silently resolved by one component's cooldown;
 - alert intents are durably persisted before remote availability; a delivery failure never blocks trading, and provider `sent` is never reported or relied on as inbox delivery — a provider outage must not permanently swallow a terminal fill or protection notification;
+- scheduling independence is verified both ways: bulk delivery never gates the next reconcile or market-data advance, and wake/signal coalescing is explicit — a flag set during a blocked window must not silently collapse multiple distinct events into one uncounted wakeup;
 - priority capacity is reserved at the point of irreversible consumption: routine notification volume (periodic reports, debug mail) must not exhaust the budget that terminal trade and protection alerts need during an incident;
 - automated action notifications carry their rule source, so during operator takeover a strategy auto-action is not mistaken for a manual instruction;
 - "process healthy" verdicts derive from the trading chain's most recent progress evidence (last processed fact), not from out-of-band component liveness — a healthcheck that never touches the decision chain can stay green for hours while positions sit unmanaged.

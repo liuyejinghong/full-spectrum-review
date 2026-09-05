@@ -138,7 +138,7 @@ Use the canonical finding schema and prose depth rules from `finding-protocol.md
 
 ## Skill / Domain Pack version traceability
 
-A persisted report should record the Core Skill version from `VERSION` when that file is available in the installed Skill. If the harness exposes the Skill repository revision, record it as well.
+A persisted report should record the Core Skill version from `VERSION` when that file is available in the installed Skill. If the harness exposes the Skill repository revision, record it as well. When the Skill is installed via git, resolve the revision with `git rev-parse HEAD` inside the Skill directory; when no git revision is available, record `revision: unavailable` with a one-line reason (copy-install, vendored snapshot, packed artifact). A report that records a version without attempting revision capture must say why the attempt was skipped.
 
 This allows a re-review to distinguish:
 
@@ -271,6 +271,12 @@ Publishing the audit into the audited repository is a separate, explicitly autho
 
 If the harness provides no writable workspace at all, return the complete report and the index delta the maintainer would need to persist.
 
+## Evidence pinning
+
+Worker packets cite source locations from their own pass; line numbers drift as the tree moves. The Lead re-opens source for every P0/P1 candidate at synthesis time (see `orchestration-protocol.md` Phase 3) and re-pins each `path:line` against the bound revision.
+
+Every published P0/P1 finding carries the verbatim mechanism snippet (a few lines, not the whole function) alongside its `path:line`. If the reopened location differs from the packet's citation, the report uses the reopened location. If a cited file moved or the lines shifted within the bound revision, the report notes the drift explicitly instead of silently keeping a stale reference. P2/P3 findings follow the same rule when their evidence is load-bearing across units; otherwise cited references plus cross-unit consistency suffice.
+
 ## Completion check
 
 Before declaring the audit complete, verify facts rather than self-certifying a checklist:
@@ -282,6 +288,7 @@ Before declaring the audit complete, verify facts rather than self-certifying a 
 - prior stable IDs/statuses were reconciled on re-review;
 - material cross-unit contradictions are resolved or explicitly left as insufficient evidence;
 - findings passed `finding-protocol.md` and were root-cause deduplicated centrally;
+- every P0/P1 `path:line` was re-pinned against reopened source at the bound revision, with drift noted where it occurred;
 - Recommended Execution Order reflects dependencies;
 - unresolved business intent is in Open Questions;
 - the report and index are persisted or returned as complete reusable artifacts.

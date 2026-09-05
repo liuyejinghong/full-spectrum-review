@@ -22,7 +22,7 @@ For each case under `fixtures/case-*`:
 
 ## Pass criteria
 
-6/6 cases green. A red case blocks the core release until the protocol
+7/7 cases green. A red case blocks the core release until the protocol
 or the case is fixed — a case may itself be wrong; fix the case, never
 weaken the assertion to pass.
 
