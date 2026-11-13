@@ -1,3 +1,5 @@
+> **No longer maintained (2026-11-13).** Its general-purpose rules were merged into [review-standard](https://github.com/liuyejinghong/review-standard), part of [Field Lab](https://github.com/liuyejinghong/field-lab). Please use that instead. This repository keeps v0.13.0 as a historical release.
+
 # Full-Spectrum Review
 
 > **An AI-native framework for deep repository-level engineering review and software maintenance.**

@@ -1,3 +1,5 @@
+> **已停止维护（2026-11-13）。** 本项目的通用规则已并入 [review-standard](https://github.com/liuyejinghong/review-standard)（实战工坊 / [Field Lab](https://github.com/liuyejinghong/field-lab)），请改用它。本仓库保留 v0.13.0 作为历史版本，不再更新。
+
 # Full-Spectrum Review
 
 > **面向 AI Agent 的软件系统级深度审计框架。**
